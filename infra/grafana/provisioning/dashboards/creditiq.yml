@@ -1,0 +1,6 @@
+apiVersion: 1
+providers:
+  - name: creditiq
+    folder: CreditIQ
+    type: file
+    options: { path: /var/lib/grafana/dashboards }
