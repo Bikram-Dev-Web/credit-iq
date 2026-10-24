@@ -40,7 +40,7 @@ anything later in the document that conflicts with them.
 | Boosting backend | Auto-detects LightGBM → XGBoost → sklearn at runtime. | The same config can produce different models on different machines. v2 pins the backend in the training config and fails loudly if it is missing. |
 | Explanations | Exact for logreg/LightGBM. RF needs `shap`, otherwise it falls back to occlusion (one extra prediction per feature). | Occlusion on ~25 features would put the 50 ms p95 target at risk. v2 makes `shap` a hard dependency of the API image and sets an explanation-latency budget. |
 | Tests | 110 test functions, 124 cases after parametrization. 10 are Streamlit `AppTest` UI tests. 5 (`test_money_formatting_with_currency`) import Streamlit only to set session state. | 114 cases port to the core. The 10 AppTests stay with the Streamlit app until it moves to `legacy/` (§6). |
-| Repo | Not a git repository yet. The project sits in a nested `Downloads/CreditIQ/CreditIQ/` folder. | Phase 1 begins with `git init` in the inner folder, which becomes the repo root. |
+| Repo | Not a git repository yet. The project sits in a nested `Downloads/CreditIQ/CreditIQ/` folder. | Superseded by §0: v2 is a new sibling folder, `creditiq-v2/`, with its own git repo. |
 | Real data | `data/raw/` is empty. The Home Credit files have not been downloaded. | Download instructions are in §9, Q1. Phase 2 needs them. |
 
 Baseline test run: see §10 (recorded before any change).
@@ -100,7 +100,7 @@ flowchart LR
 ### Repository layout (target)
 
 ```
-CreditIQ/                         # repo root (= current inner folder)
+creditiq-v2/                      # repo root (new folder, see §0)
 ├── pyproject.toml  uv.lock       # uv workspace root; ruff/mypy/pytest config
 ├── packages/creditiq_core/       # installable library, src layout, py.typed
 │   ├── src/creditiq_core/
@@ -148,12 +148,12 @@ not carried into v2 (kept in `legacy/` where noted).
 | `fairness.py` | `creditiq_core/fairness.py` | **Reuse** | Type hints. |
 | `monitoring.py` | `creditiq_core/monitoring.py` | **Refactor (small)** | `drift_alerts` currently reads PSI thresholds from `config`. They become parameters, defaulting to `defaults.PSI_*`, so the monitor service can configure them. Adds a structured alert type (`code`, `severity`, `message`, `value`, `threshold`) next to the existing strings. |
 | `portfolio_analysis.py` | `creditiq_core/finance/portfolio.py` | **Reuse** | `config` → `defaults`. |
-| `explainability.py` | `creditiq_core/explainability.py` | **Refactor (small)** | Adds a single-row fast path for `top_reasons` (no DataFrame `groupby` per call; precomputed origin-index map). Results must match the existing function, and a test asserts it. `shap` becomes required in the API image. |
+| `explainability.py` | `creditiq_core/explainability.py` | **Refactor (small)** | Moved unchanged in Phase 1. A single-row fast path for `top_reasons` (precomputed origin-index map, no per-call `groupby`) is added in Phase 3/5 **only if** the latency measurement shows it is needed, with a test that it matches the existing function. `shap` becomes required in the API image. |
 | `preprocessing.py` | `creditiq_core/features/preprocessing.py` | **Reuse** | — |
 | `feature_engineering.py` | `creditiq_core/features/engineering.py` | **Reuse** | — |
 | `modeling.py` | `creditiq_core/models/` (`estimators.py`, `credit_model.py`, `training.py`, `artifact.py`) | **Refactor** | (1) The boosting backend is an explicit config value; a missing library raises an error instead of falling back silently. (2) `ModelBundle` → `ModelArtifact`: pipeline, calibrator, input schema, threshold and its rule, monitoring reference, transformed mean, metadata, `format_version=2`. **No eval arrays** (they go to the evaluation snapshot). (3) `ExperimentResult.bundle()` → `to_artifact()` + `evaluation_snapshot()`. (4) `experiment_id` uuid → MLflow run id, supplied by the caller. The training algorithm itself is unchanged. |
 | `data_validation.py` | `creditiq_core/data/validation.py` | **Reuse** | `quality_report` stays (the trainer logs it to MLflow). |
-| `data_loader.py` | split: `creditiq_core/data/{csv.py,synthetic.py}` + trainer | **Refactor** | Sniffing and parsing take **bytes or file-like** objects (pure). Opening paths, `list_local_csv_files` and the row-count helper move to the trainer. The synthetic generator stays in the core (deterministic given a seed). `sanitize_filename` moves to the API utilities. |
+| `data_loader.py` | split: `creditiq_core/data/{csv.py,synthetic.py}` + trainer | **Refactor** | Sniffing and parsing take **bytes or file-like** objects (pure). Opening paths, `list_local_csv_files` and the row-count helper move to the trainer. The synthetic generator stays in the core (deterministic given a seed). `sanitize_filename` stays in the core (a pure string function used by the dataset record). |
 | `config.py` | split: `creditiq_core/defaults.py` + per-service `settings.py` | **Refactor** | Domain constants → core. Paths, env vars and `.env` → `pydantic-settings` in each service. No import-time side effects. |
 | `reporting.py` | `creditiq_core/reporting/` | **Refactor (partial)** | `model_card_markdown` and the provenance vocabulary are kept, and the trainer logs the model card to MLflow. The HTML/Markdown "project report" is **dropped** in v2: the dashboard and the MLflow run replace it. It stays available in `legacy/`. |
 | `persistence.py` | replaced | **Drop + replace** | SQLite → Postgres (SQLAlchemy 2 + Alembic) in the API. joblib bundles → MLflow artifacts. `hash_inputs` → HMAC (§5.5). `to_json`/`_sanitize` (NaN-safe JSON) moves to the core as a utility, because the API needs it too. |
@@ -299,7 +299,7 @@ the key. In local dev, a role switcher picks the analyst or admin key. On the **
 ### 5.9 Tooling
 - `uv` workspace (one lockfile). Python **3.12** in the images, with CI testing 3.11 and 3.12. Your machine has 3.13,
   and the core is tested on it locally too.
-- `ruff` (lint + format). `mypy --strict` on `creditiq_core` with `pandas-stubs`; the services use standard mypy.
+- `ruff` (lint + format). `mypy --strict` on `creditiq_core` and the trainer with `pandas-stubs`, relaxing only `disallow_any_generics` and `warn_return_any` (untyped scikit-learn objects would otherwise need casts everywhere).
   sklearn has no stubs, so `ignore_missing_imports` applies to sklearn, lightgbm and shap only.
 - `pnpm` via `corepack enable` (pnpm is not installed on this machine).
 - OpenTelemetry: optional, Phase 5 stretch goal (FastAPI + SQLAlchemy auto-instrumentation, OTLP to a Jaeger
@@ -325,13 +325,15 @@ Phase 4.
 | `test_portfolio_fairness_monitoring.py` | 6 | core | |
 | `test_audit_regressions.py` | 24 | core | the money-format test is rewritten against the pure `formatting.money(v, currency=…)` with the same 5 cases; Streamlit is no longer imported |
 | `test_reporting_persistence.py` | 6 | core (model card, JSON) + api (audit) | the SQLite audit test → Postgres audit test in Phase 3; the HTML report tests go to legacy |
-| `test_scripts.py` | 3 | trainer | Home Credit enrichment and German conversion on mock files; the CLI test → `creditiq-train` on the synthetic sample |
+| `test_scripts.py` | 3 | trainer (2 in Phase 1; the CLI test in Phase 2) | Home Credit enrichment and German conversion on mock files; the CLI test → `creditiq-train` on the synthetic sample |
 | `test_app_smoke.py`, `test_app_audit.py` | 10 | stay with the Streamlit app → `legacy/tests/` in Phase 6 | still run in CI until Phase 6; their *behaviours* are re-expressed as API and Playwright tests (validation-only threshold explorer, invalidation on model change, portfolio filters change numbers, horizon drives economics, privacy) |
 | `conftest.py` | — | core `conftest.py` | env redirection is no longer needed once the core has no I/O |
 
-**Phase 1 exit criterion:** 114 core cases + 10 Streamlit cases = **124 passing**, plus new tests (artifact
-round-trip, no-sensitive-columns, config validation). Each test is moved in the same commit as the module it covers,
-so the suite is green at every commit.
+**Phase 1 exit criterion (revised by decision §0):** because v1 is copied unchanged into `legacy/`, its full
+**124-test suite keeps passing there**. Separately, the core and trainer suites pass with the ported tests plus new
+ones (artifact round-trip, no sensitive columns in the schema, explicit backend, structured alerts). The SQLite,
+HTML-report and Streamlit tests are not ported: v2 replaces that code (Postgres audit log in Phase 3, MLflow model
+card in Phase 2, web UI in Phase 4) and re-tests the behaviour there.
 
 ---
 
@@ -340,7 +342,7 @@ so the suite is green at every commit.
 | Phase | Deliverables | Exit criteria |
 |---|---|---|
 | **0 — Plan** | This document, the architecture diagram, the ADR list | Your approval |
-| **1 — Core** | `git init`; uv workspace; `creditiq_core` package; ported tests; ruff + mypy; Streamlit app switched to `creditiq_core` imports; pre-commit | 124+ green; `mypy --strict` clean on the core; `streamlit run app.py` still works |
+| **1 — Core** | `git init`; uv workspace; `creditiq_core` package; ported tests; ruff + mypy; v1 frozen in `legacy/` | core + trainer green; legacy 124 green; mypy clean; `streamlit run app.py` still works from `legacy/` |
 | **2 — Trainer** | `creditiq-train` (YAML configs for the synthetic sample and Home Credit raw/enriched); MLflow logging (params, per-split metrics, calibration/ROC/PR plots, model card, quality report); registration + aliases; evaluation snapshot; reproducibility test (same seed → identical metrics and predictions) | Synthetic results reproduce the v1 README table; Home Credit test metrics in the README (needs the data) |
 | **3 — API** | All `/v1` endpoints; policy engine + `policies/v1.yaml`; Postgres + Alembic; auth + rate limit; audit log; JSON logging; Prometheus metrics; hot reload; pytest + httpx tests; Schemathesis contract tests | Every endpoint tested; contract tests green; no raw inputs stored or logged (asserted) |
 | **4 — Web** | Tokens, shell, theme, core components → the ten pages in order; generated API client; Playwright for score / policy simulation / promote / drift | E2E green in both themes; axe accessibility check has no serious violations; 375 px layout verified |
