@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+/*
+ * CreditIQ design tokens — the only place colours are defined (docs/v2/DESIGN.md).
+ * Dark is the primary theme; light is a full, separately tuned theme, not an inversion.
+ * Theme is set on <html data-theme="dark|light"> by next-themes (system preference by default).
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* neutrals (zinc) */
+  --bg: #09090b;
+  --surface: #111113;
+  --surface-2: #18181b;
+  --surface-3: #1f1f23;
+  --border: #26262b;
+  --border-strong: #3a3a41;
+  --fg: #fafafa;
+  --fg-secondary: #b4b4bd;
+  --fg-muted: #8e8e98;
+  --ring: #8b7dff;
+  /* accent: electric indigo-violet */
+  --accent: #8b7dff;
+  --accent-hover: #9e93ff;
+  --accent-fg: #0c0a1d;
+  --accent-soft: rgb(139 125 255 / 0.14);
+  /* status (fixed steps; always paired with an icon or label) */
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --good-soft: rgb(12 163 12 / 0.16);
+  --warning-soft: rgb(250 178 25 / 0.14);
+  --serious-soft: rgb(236 131 90 / 0.15);
+  --critical-soft: rgb(208 59 59 / 0.18);
+  /* risk bands map to the status steps (low → high) */
+  --band-low: var(--good);
+  --band-moderate: var(--warning);
+  --band-elevated: var(--serious);
+  --band-high: var(--critical);
+  /* provenance pills */
+  --prov-observed: #3fb68b;
+  --prov-measured: #5b9cf0;
+  --prov-model: #a497ff;
+  --prov-assumption: #e3b341;
+  --prov-simulated: #e07fb0;
+  --prov-synthetic: #f08a4b;
+  /* charts (validated: categorical slots 1–3, all-pairs, dark surface) */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --chart-grid: #232328;
+  --chart-axis: #8e8e98;
+  --diverging-neg: #e66767;
+  --diverging-mid: #383835;
+  --diverging-pos: #3987e5;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #ececef;
+  --border: #e4e4e7;
+  --border-strong: #d0d0d6;
+  --fg: #09090b;
+  --fg-secondary: #4f4f58;
+  --fg-muted: #6a6a73;
+  --ring: #5b4ae0;
+  --accent: #5b4ae0;
+  --accent-hover: #4c3bd1;
+  --accent-fg: #ffffff;
+  --accent-soft: rgb(91 74 224 / 0.1);
+  --good: #0a8f0a;
+  --warning: #b98000;
+  --serious: #d4642f;
+  --critical: #c42f2f;
+  --good-soft: rgb(10 143 10 / 0.1);
+  --warning-soft: rgb(250 178 25 / 0.16);
+  --serious-soft: rgb(212 100 47 / 0.12);
+  --critical-soft: rgb(196 47 47 / 0.1);
+  --prov-observed: #13805b;
+  --prov-measured: #2563c9;
+  --prov-model: #5b4ae0;
+  --prov-assumption: #8f6500;
+  --prov-simulated: #b83f7d;
+  --prov-synthetic: #b9531a;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --chart-grid: #ececef;
+  --chart-axis: #6a6a73;
+  --diverging-neg: #e34948;
+  --diverging-mid: #f0efec;
+  --diverging-pos: #2a78d6;
+  --shadow: 0 1px 2px rgb(9 9 11 / 0.05), 0 4px 16px rgb(9 9 11 / 0.04);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-secondary: var(--fg-secondary);
+  --color-fg-muted: var(--fg-muted);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-warning: var(--warning);
+  --color-serious: var(--serious);
+  --color-critical: var(--critical);
+  --color-good-soft: var(--good-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-serious-soft: var(--serious-soft);
+  --color-critical-soft: var(--critical-soft);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --shadow-card: var(--shadow);
+  /* type scale (px): 11 / 12 / 13 / 14 / 16 / 20 / 24 / 30 */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  /* every number uses tabular figures */
+  .num,
+  td,
+  th,
+  input[type="number"],
+  .recharts-text,
+  .recharts-tooltip-wrapper {
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: var(--accent-soft);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0ms !important;
+      animation-duration: 0ms !important;
+    }
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+  }
+  .recharts-cartesian-grid line {
+    stroke: var(--chart-grid);
+  }
+  .recharts-cartesian-axis-tick-value,
+  .recharts-label {
+    fill: var(--chart-axis);
+    font-size: 11px;
+  }
+  .recharts-cartesian-axis-line,
+  .recharts-cartesian-axis-tick-line {
+    stroke: var(--border-strong);
+  }
+  .recharts-legend-item-text {
+    color: var(--fg-secondary) !important;
+    font-size: 12px;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
