@@ -1,4 +1,4 @@
-# Presentation brief: CreditIQ v2, day 1 (24 October 2026)
+`# Presentation brief: CreditIQ v2, day 1 (24 October 2026)
 
 ## Instructions for the slide generator
 
@@ -71,19 +71,21 @@ Create a **10-slide** presentation from this brief.
 - *Visual:* a horizontal timeline with 8 steps:
   0 Plan → 1 Core library → 2 Trainer + MLflow → 3 API + policy engine → 4 Web dashboard → 5 Monitoring + load test
   → 6 CI/CD + deploy → 7 Docs + polish
-- Highlight phase 0 as done and phase 1 as in progress.
+- Highlight phases 0 and 1 as done and phase 2 as next.
 - Notes: Each phase ends with everything building, all tests passing and a short review before moving on.
 
 ## Slide 9: Done today
-- Read and audited the full v1 codebase and documentation
-- Re-ran the v1 test suite: 124 of 124 passed (first run on Windows)
-- Wrote and approved the migration plan, with 14 planned decision records
-- Created the new `creditiq-v2` repository and started phase 1 (core library)
-- Notes: The plan document is at docs/v2/MIGRATION_PLAN.md in the new repository.
+- Audited v1 and agreed the migration plan (14 planned decision records)
+- New `creditiq-v2` repo; the v1 app kept runnable in `legacy/` (124/124 tests pass)
+- Phase 1 done: core library extracted, 121 tests passing (100 ported from v1, 21 new)
+- Strict type checking (mypy) and linting (ruff) both pass
+- Same data and seed: v2 reproduces v1's models, thresholds and metrics exactly
+- Notes: The core library now has no Streamlit and no file access, so the API, trainer and monitor can all reuse it. A check script proves the move changed no results.
 
 ## Slide 10: Next steps
-- Finish extracting the core library, with all ported tests passing
-- Add linting (ruff) and type checking (mypy)
-- Then phase 2: a training command that logs to MLflow
-- Open item: the group can optionally download the free Home Credit dataset from Kaggle
-- Notes: Next session's goal is a clean, installable core package with a green test suite.
+- Phase 2: a `creditiq-train` command driven by YAML configs
+- Log every run to MLflow and register the selected model (staging / production)
+- Reproducible runs: the same seed gives the same model
+- Optional: the group can download the free Home Credit dataset from Kaggle for real-data results
+- Notes: After phase 2 the platform can train, version and promote models; phase 3 then serves them through the API.
+`
