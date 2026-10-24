@@ -1,4 +1,4 @@
-`# Presentation brief: CreditIQ v2, day 1 (24 October 2026)
+# Presentation brief: CreditIQ v2, day 1 (24 October 2026)
 
 ## Instructions for the slide generator
 
@@ -88,4 +88,3 @@ Create a **10-slide** presentation from this brief.
 - Reproducible runs: the same seed gives the same model
 - Optional: the group can download the free Home Credit dataset from Kaggle for real-data results
 - Notes: After phase 2 the platform can train, version and promote models; phase 3 then serves them through the API.
-`
