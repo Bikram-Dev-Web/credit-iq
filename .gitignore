@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime artefacts (may contain model internals or borrower-derived data)
+mlruns/
+mlartifacts/
+storage/
+models/
+reports/
+artifacts/
+
+# Real datasets are never committed. Download them yourself (see docs/DATA_SOURCES.md)
+data/raw/*
+!data/raw/.gitkeep
+
+# Node / web
+node_modules/
+.next/
+.pnpm-store/
+playwright-report/
+test-results/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
