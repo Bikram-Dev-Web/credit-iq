@@ -186,7 +186,7 @@ class ExperimentResult:
         if id_col and id_col in f.columns:
             out[id_col] = f[id_col].to_numpy()
         out["observed_default (historical label)"] = self.y_split("test")
-        for key, model in self.models.items():
+        for key in self.models:
             out[f"{key}_raw_score"] = self.scores[key]["test"]
             out[f"{key}_pd"] = self.pds[key]["test"]
             out[f"{key}_flagged"] = (self.pds[key]["test"] >= self.thresholds[key]).astype(int)
@@ -307,7 +307,7 @@ def run_experiment(
         leakage_flags = {str(r.column): float(r.single_feature_auc) for r in iter_rows(flagged)}
         if leakage_flags:
             predictors = [c for c in predictors if c not in leakage_flags]
-            for c, auc in leakage_flags.items():
+            for c in leakage_flags:
                 excluded[c] = "leakage (training-split screen)"
             warnings.append("Excluded by the leakage guard (single-feature AUC on training rows ≥ "
                             f"{cfg.leakage_auc_threshold:.2f}): " + ", ".join(f"{c} ({a:.3f})" for c, a in leakage_flags.items()))
@@ -364,7 +364,7 @@ def run_experiment(
         scores[key], pds[key], thresholds[key] = raw, pd_, thr
         metrics[key] = {k: classification_metrics(y_s[k], pd_[k], thr) for k in idx}
 
-    metric_name, higher_better = SELECTION_METRICS[cfg.selection_metric]
+    _, higher_better = SELECTION_METRICS[cfg.selection_metric]
 
     def sel_value(k: str) -> float:
         v = metrics[k]["validation"][cfg.selection_metric]
