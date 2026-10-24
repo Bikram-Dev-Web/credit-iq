@@ -139,6 +139,66 @@ def local_explanation(model: CreditModel, x_row: pd.DataFrame, schema: dict[str,
     return out.head(top).reset_index(drop=True), meta
 
 
+# ---------------------------------------------------------------------------
+# Single-row fast path (serving)
+# ---------------------------------------------------------------------------
+
+def _aggregation(model: CreditModel) -> tuple[np.ndarray, list[str]]:
+    """Cached 0/1 matrix (n_transformed × n_sources) that sums encoded columns back to their source input."""
+    cache: dict[str, Any] = model.__dict__.setdefault("_serving_cache", {})
+    if "agg" not in cache:
+        names = model.transformed_feature_names()
+        origin = model.feature_origin_map()
+        sources = list(dict.fromkeys(origin.get(n, n) for n in names))
+        index = {s: i for i, s in enumerate(sources)}
+        agg = np.zeros((len(names), len(sources)))
+        for j, n in enumerate(names):
+            agg[j, index[origin.get(n, n)]] = 1.0
+        cache["agg"] = (agg, sources)
+    out: tuple[np.ndarray, list[str]] = cache["agg"]
+    return out
+
+
+def explain_one(model: CreditModel, x_row: pd.DataFrame, schema: dict[str, Any],
+                transformed_mean: np.ndarray | None = None,
+                top: int = 12) -> tuple[float, list[dict[str, Any]], dict[str, Any]]:
+    """Raw score and top contributions for ONE applicant, running the pipeline once.
+
+    Exact for logistic regression and LightGBM (the serving models); other estimators fall back to
+    :func:`local_explanation`. Returns the same contributions as the general path (tested).
+    """
+    est = model.estimator
+    if model.key == "logreg" or (model.key == "gbm" and model.backend == "lightgbm"):
+        clean = model.pipeline[:2].transform(x_row)
+        Xt = np.asarray(model.pipeline.named_steps["preprocess"].transform(clean), dtype=float)
+        raw = float(est.predict_proba(Xt)[0, 1])
+        agg, sources = _aggregation(model)
+        meta: dict[str, Any]
+        if model.key == "logreg":
+            coef = est.coef_.ravel()
+            mean = (transformed_mean if transformed_mean is not None and len(transformed_mean) == len(coef)
+                    else np.zeros_like(coef))
+            contrib = ((Xt[0] - mean) * coef) @ agg
+            meta = {"method": "Exact linear contribution: coefficient × (value − training mean)",
+                    "units": "log-odds of the model score", "base_value": float(est.intercept_[0] + coef @ mean),
+                    "exact": True}
+        else:
+            full = est.booster_.predict(Xt, pred_contrib=True)
+            contrib = full[0, :-1] @ agg
+            meta = {"method": "TreeSHAP (LightGBM native pred_contrib)", "units": "log-odds of the model score",
+                    "base_value": float(full[0, -1]), "exact": True}
+        derived = set(model.derived_features())
+        row = clean.iloc[0]
+        order = np.argsort(-np.abs(contrib), kind="stable")[:top]
+        rows = [{"feature": sources[i], "value": row.get(sources[i], np.nan), "contribution": float(contrib[i]),
+                 "derived": sources[i] in derived} for i in order]
+        meta["n_features"] = len(sources)
+        return raw, rows, meta
+    raw = float(model.predict_score(x_row)[0])
+    table, meta = local_explanation(model, x_row, schema, transformed_mean, top)
+    return raw, [{str(k): v for k, v in r.items()} for r in table.to_dict(orient="records")], meta
+
+
 def global_contribution_importance(model: CreditModel, X: pd.DataFrame, schema: dict[str, Any],
                                    transformed_mean: np.ndarray | None = None, max_rows: int = 400,
                                    seed: int = 42) -> tuple[pd.DataFrame, dict[str, Any]]:

@@ -140,3 +140,25 @@ def test_model_card_uses_real_metadata(experiment):
     assert experiment.experiment_id in card and "Out-of-scope" in card
     assert f"{experiment.metrics[experiment.selected]['test']['roc_auc']:.4g}" in card
     assert "SYNTHETIC" in card
+
+
+# ---------------------------------------------------------------- serving fast path
+@pytest.mark.parametrize("key", ["logreg", "gbm", "random_forest"])
+def test_explain_one_matches_the_general_path(experiment, key):
+    from creditiq_core import explainability as xai
+
+    model = experiment.models[key]
+    art = experiment.to_artifact(key)
+    for i in (0, 5, 17):
+        x = experiment.X_split("test").iloc[[i]]
+        raw, rows, meta = xai.explain_one(model, x, art.input_schema, art.transformed_mean, top=6)
+        assert raw == pytest.approx(float(model.predict_score(x)[0]), rel=1e-9)
+        ref, ref_meta = xai.local_explanation(model, x, art.input_schema, art.transformed_mean, top=6)
+        got = {r["feature"]: r["contribution"] for r in rows}
+        want = dict(zip(ref["feature"], ref["contribution"], strict=True))
+        assert set(got) == set(want)
+        for f, v in want.items():
+            assert got[f] == pytest.approx(v, rel=1e-6, abs=1e-9)
+        assert meta["exact"] == ref_meta["exact"] and meta["units"] == ref_meta["units"]
+        if meta["base_value"] is not None:
+            assert meta["base_value"] == pytest.approx(ref_meta["base_value"])
