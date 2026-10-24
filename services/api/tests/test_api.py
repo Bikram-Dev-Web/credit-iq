@@ -381,3 +381,11 @@ def test_migrations_round_trip_and_match_the_models(tmp_path: Path):
     migrate.downgrade(url)
     migrate.upgrade(url)
     engine.dispose()
+
+
+def test_hosted_postgres_urls_get_the_psycopg_driver() -> None:
+    from creditiq_api.settings import Settings
+
+    s = Settings(_env_file=None, database_url="postgres://u:p@host/db?sslmode=require")  # type: ignore[call-arg]
+    assert s.database_url == "postgresql+psycopg://u:p@host/db?sslmode=require"
+    assert Settings(_env_file=None, database_url="sqlite:///x.db").database_url == "sqlite:///x.db"  # type: ignore[call-arg]

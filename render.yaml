@@ -1,0 +1,21 @@
+# Render Blueprint for the hosted demo API (free plan). See docs/DEPLOY.md for the step-by-step guide.
+services:
+  - type: web
+    name: creditiq-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./infra/deploy/api.Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL          # Neon connection string, postgresql+psycopg://…?sslmode=require
+        sync: false
+      - key: API_KEYS              # analyst:<long random key>   (no admin key on the public demo)
+        sync: false
+      - key: AUDIT_HASH_KEY
+        generateValue: true
+      - key: CORS_ORIGINS          # your Vercel URL
+        sync: false
+      - key: PORT
+        value: "8000"

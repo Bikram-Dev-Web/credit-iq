@@ -51,6 +51,15 @@ class Settings(BaseSettings):
     grafana_url: str | None = None
     mlflow_ui_url: str | None = None
 
+    @field_validator("database_url")
+    @classmethod
+    def _driver(cls, v: str) -> str:
+        """Hosted Postgres (Neon, Render) hands out postgres:// URLs; SQLAlchemy needs the psycopg 3 driver name."""
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                return "postgresql+psycopg://" + v[len(prefix):]
+        return v
+
     @field_validator("environment", mode="before")
     @classmethod
     def _lower(cls, v: str) -> str:

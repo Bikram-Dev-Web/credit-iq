@@ -1,7 +1,7 @@
 # Next.js standalone build.
 FROM node:22-alpine AS build
 WORKDIR /web
-RUN npm install -g pnpm@12
+RUN corepack enable && corepack prepare pnpm@12.15.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .

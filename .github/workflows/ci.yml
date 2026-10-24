@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MLFLOW_DISABLE_AGENT_HINT: "1"
+  OPENBLAS_NUM_THREADS: "2"
+
+jobs:
+  python:
+    name: Python — lint, types, tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: creditiq, POSTGRES_PASSWORD: creditiq, POSTGRES_DB: creditiq_test }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U creditiq" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_POSTGRES_URL: postgresql+psycopg://creditiq:creditiq@localhost:5432/creditiq_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true }
+      - run: uv python install ${{ matrix.python }}
+      - run: uv sync --frozen --python ${{ matrix.python }}
+      - name: Ruff
+        run: uv run ruff check .
+      - name: Mypy (strict)
+        run: uv run mypy
+      - name: Tests (core, trainer, API incl. Postgres and OpenAPI contract, monitor)
+        run: uv run pytest -W ignore::UserWarning
+      - name: OpenAPI snapshot is current
+        if: matrix.python == '3.12'
+        run: |
+          uv run creditiq-train train --config services/trainer/configs/synthetic.yaml --no-mlflow \
+            --file-registry models/registry --alias production
+          uv run python scripts/export_openapi.py --check
+
+  legacy:
+    name: Legacy v1 app tests
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: legacy } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: "legacy/requirements*.txt" }
+      - run: pip install -r requirements.txt -r requirements-optional.txt
+      - run: python -m pytest
+
+  web:
+    name: Web — types, lint, build
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: web } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4  # version from web/package.json packageManager
+        with: { package_json_file: web/package.json }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: web/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - name: Generated API types match the OpenAPI snapshot
+        run: pnpm gen:api && git diff --exit-code src/lib/api/schema.d.ts
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    needs: [python, web]
+    env:
+      API_KEYS: analyst:ci-analyst-key-123,admin:ci-admin-key-456
+      AUDIT_HASH_KEY: ci-audit-hash-key-0123456789
+      DATABASE_URL: sqlite:///storage/e2e.db
+      FILE_REGISTRY_PATH: models/registry
+      ENVIRONMENT: ci
+      RATE_LIMIT_SCORE: 100000/minute
+      REGISTRY_POLL_SECONDS: "0"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true }
+      - run: uv sync --frozen --no-dev
+      - name: Build a two-version registry (production + staging)
+        run: |
+          uv run creditiq-train train --config services/trainer/configs/synthetic_ci.yaml --no-mlflow --file-registry models/registry --alias production
+          uv run creditiq-train train --config services/trainer/configs/synthetic_ci.yaml --no-mlflow --file-registry models/registry --alias staging
+      - name: Start the API
+        run: |
+          nohup uv run creditiq-api > api.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:8000/readyz && break; sleep 2; done
+      - uses: pnpm/action-setup@v4  # version from web/package.json packageManager
+        with: { package_json_file: web/package.json }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: web/pnpm-lock.yaml }
+      - name: Build and start the web app
+        working-directory: web
+        env:
+          CREDITIQ_API_URL: http://localhost:8000
+          CREDITIQ_ANALYST_KEY: ci-analyst-key-123
+          CREDITIQ_ADMIN_KEY: ci-admin-key-456
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          nohup pnpm start > ../web.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:3000/api/session && break; sleep 2; done
+      - name: Playwright
+        working-directory: web
+        env: { E2E_BASE_URL: "http://localhost:3000" }
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright test --project desktop --project mobile
+      - if: failure()
+        run: tail -n 200 api.log web.log
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-report, path: web/playwright-report, retention-days: 7 }
+
+  images:
+    name: Docker images
+    runs-on: ubuntu-latest
+    needs: [python, web]
+    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - name: Python services image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/python.Dockerfile
+          push: ${{ github.event_name == 'push' }}
+          tags: ghcr.io/${{ github.repository }}/python:${{ github.sha }},ghcr.io/${{ github.repository }}/python:latest
+          cache-from: type=gha,scope=python
+          cache-to: type=gha,mode=max,scope=python
+      - name: Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: web
+          push: ${{ github.event_name == 'push' }}
+          tags: ghcr.io/${{ github.repository }}/web:${{ github.sha }},ghcr.io/${{ github.repository }}/web:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web

@@ -1,0 +1,48 @@
+name: Scheduled monitoring and retraining
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # daily drift check on the deployed demo
+    - cron: "41 3 * * 1"   # weekly retrain (a candidate only; promotion stays a human decision)
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "monitor or retrain"
+        required: true
+        default: monitor
+
+env:
+  MLFLOW_DISABLE_AGENT_HINT: "1"
+
+jobs:
+  monitor:
+    if: github.event.schedule == '17 6 * * *' || github.event.inputs.task == 'monitor'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Drift check on the deployed API
+        env:
+          API: ${{ secrets.DEMO_API_URL }}
+          KEY: ${{ secrets.DEMO_ANALYST_KEY }}
+        run: |
+          if [ -z "$API" ]; then echo "DEMO_API_URL is not set; skipping"; exit 0; fi
+          # free-tier hosts sleep when idle: wake the API first
+          for i in $(seq 1 30); do curl -sf "$API/healthz" && break; sleep 10; done
+          curl -sf -H "X-API-Key: $KEY" -F "file=@data/sample_monitoring_batch.csv" "$API/v1/monitoring/check" > run.json
+          python3 -c "import json; r=json.load(open('run.json'))['result']; print('status:', r['status']); [print('-', a['message']) for a in r['alerts']]"
+
+  retrain:
+    if: github.event.schedule == '41 3 * * 1' || github.event.inputs.task == 'retrain'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with: { enable-cache: true }
+      - run: uv sync --frozen --no-dev
+      - name: Train a candidate (local MLflow store) and export it
+        run: |
+          uv run creditiq-train train --config services/trainer/configs/synthetic.yaml --alias staging
+          uv run creditiq-train export --ref staging --out candidate-registry
+          uv run creditiq-train versions
+      - uses: actions/upload-artifact@v4
+        with: { name: candidate-model, path: candidate-registry, retention-days: 30 }
