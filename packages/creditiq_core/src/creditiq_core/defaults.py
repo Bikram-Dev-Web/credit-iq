@@ -26,6 +26,6 @@ PSI_MODERATE = 0.10
 PSI_SIGNIFICANT = 0.25
 
 APP_DISCLAIMER = (
-    "CreditIQ is an educational decision-support prototype. It does not make, "
-    "and must not be used to make, real credit decisions."
+    "Educational decision-support prototype, not for real credit decisions. "
+    "CreditIQ does not make, and must not be used to make, real credit decisions."
 )

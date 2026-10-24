@@ -173,7 +173,7 @@ class PolicyValidationError(ValueError):
         super().__init__("Invalid policy:\n" + "\n".join(f"  - {e}" for e in errors))
 
 
-def _format(err: dict[str, Any]) -> str:
+def _format(err: Any) -> str:
     loc = ".".join(str(p) for p in err.get("loc", ()) if not (isinstance(p, str) and p in {
         "ratio_limit", "missing_value", "range", "category_in"}))
     return f"{loc or 'policy'}: {err.get('msg', 'invalid')}"
