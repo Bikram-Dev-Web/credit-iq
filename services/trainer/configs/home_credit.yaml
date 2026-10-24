@@ -1,0 +1,24 @@
+# Home Credit Default Risk (Kaggle, free account): put application_train.csv in data/raw/.
+# TARGET = 1 is a payment difficulty on an early instalment, NOT a 12-month default.
+name: home-credit
+description: Home Credit application_train.csv, 150k rows streamed, 60k labelled rows trained.
+dataset:
+  path: data/raw/application_train.csv
+  kind: home_credit
+  load_rows: 150000            # random sample while streaming the ~307k-row file
+target:
+  column: TARGET
+  default_values: [1]
+  non_default_values: [0]
+columns:
+  exclude: [SK_ID_CURR]
+  exposure: AMT_CREDIT         # no calendar dates in this dataset → stratified split only
+split:
+  strategy: stratified
+sample_size: 60000
+models: [logreg, random_forest, gbm]
+gbm_backend: lightgbm
+seed: 42
+registry:
+  model_name: creditiq-pd
+  alias: staging

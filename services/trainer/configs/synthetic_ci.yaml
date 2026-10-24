@@ -1,0 +1,23 @@
+# Small, fast variant of synthetic.yaml for CI and tests (fewer trees). SYNTHETIC data.
+name: synthetic-ci
+dataset:
+  path: data/sample_credit_data.csv
+  kind: synthetic
+target:
+  column: TARGET
+  default_values: [1]
+  non_default_values: [0]
+columns:
+  exclude: [SK_ID_CURR]
+  date: APPLICATION_DATE
+  exposure: AMT_CREDIT
+  sensitive: [CODE_GENDER, DAYS_BIRTH, NAME_FAMILY_STATUS]
+sample_size: 8000
+models: [logreg, gbm]
+gbm_backend: lightgbm
+params:
+  gbm: {n_estimators: 150, learning_rate: 0.08}
+seed: 42
+registry:
+  model_name: creditiq-pd
+  alias: staging
