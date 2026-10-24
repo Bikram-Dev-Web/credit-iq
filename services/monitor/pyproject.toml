@@ -1,0 +1,24 @@
+[project]
+name = "creditiq-monitor"
+version = "2.0.0.dev0"
+description = "CreditIQ scheduled drift monitoring job."
+requires-python = ">=3.11"
+dependencies = [
+    "creditiq-core",
+    "creditiq-api",
+    "prometheus-client>=0.20",
+]
+
+[project.scripts]
+creditiq-monitor = "creditiq_monitor.cli:main"
+
+[tool.uv.sources]
+creditiq-core = { workspace = true }
+creditiq-api = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/creditiq_monitor"]

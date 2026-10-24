@@ -4,17 +4,19 @@ version = "2.0.0.dev0"
 description = "CreditIQ v2 workspace: credit-decisioning platform (core library, services, web)"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["creditiq-core[boosting,shap]", "creditiq-trainer"]
+dependencies = ["creditiq-core[boosting,shap]", "creditiq-trainer", "creditiq-api", "creditiq-monitor"]
 
 [tool.uv]
 package = false
 
 [tool.uv.workspace]
-members = ["packages/creditiq_core", "services/trainer"]
+members = ["packages/creditiq_core", "services/trainer", "services/api", "services/monitor"]
 
 [tool.uv.sources]
 creditiq-core = { workspace = true }
 creditiq-trainer = { workspace = true }
+creditiq-api = { workspace = true }
+creditiq-monitor = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -23,6 +25,9 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "pandas-stubs>=2.2",
+    "types-pyyaml>=6.0",
+    "httpx>=0.27",
+    "schemathesis>=3.30",
 ]
 
 # ---------------------------------------------------------------- ruff
@@ -45,13 +50,17 @@ ignore = [
     "RUF046",  # explicit int() casts on numpy scalars are kept for readable JSON output
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency markers are evaluated once at import, by design.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.params.Depends", "fastapi.params.Query"]
+
 [tool.ruff.lint.isort]
-known-first-party = ["creditiq_core", "creditiq_trainer"]
+known-first-party = ["creditiq_core", "creditiq_trainer", "creditiq_api", "creditiq_monitor"]
 
 # ---------------------------------------------------------------- mypy
 [tool.mypy]
 python_version = "3.11"
-files = ["packages/creditiq_core/src", "services/trainer/src"]
+files = ["packages/creditiq_core/src", "services/trainer/src", "services/api/src", "services/monitor/src"]
 strict = true
 # scikit-learn, LightGBM and SHAP ship no type information; their objects are Any.
 disallow_subclassing_any = false
@@ -60,12 +69,12 @@ disallow_any_generics = false
 warn_return_any = false
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "lightgbm.*", "xgboost.*", "shap.*", "joblib.*", "scipy.*"]
+module = ["sklearn.*", "lightgbm.*", "xgboost.*", "shap.*", "joblib.*", "scipy.*", "mlflow.*", "slowapi.*", "matplotlib.*", "schemathesis.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
-testpaths = ["packages/creditiq_core/tests", "services/trainer/tests"]
+testpaths = ["packages/creditiq_core/tests", "services/trainer/tests", "services/api/tests", "services/monitor/tests"]
 # importlib mode: test files in different packages may share a basename (e.g. test_config.py).
 addopts = "-q --import-mode=importlib"
 filterwarnings = ["ignore::DeprecationWarning"]
