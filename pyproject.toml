@@ -1,0 +1,71 @@
+[project]
+name = "creditiq"
+version = "2.0.0.dev0"
+description = "CreditIQ v2 workspace: credit-decisioning platform (core library, services, web)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["creditiq-core[boosting,shap]", "creditiq-trainer"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/creditiq_core", "services/trainer"]
+
+[tool.uv.sources]
+creditiq-core = { workspace = true }
+creditiq-trainer = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pandas-stubs>=2.2",
+]
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "NPY", "PD002"]
+ignore = [
+    "E501",    # long user-facing strings are kept on one line; the 120-column limit is a guide, not a rule
+    "E741",    # `l` for LGD arrays mirrors the maths notation
+    "RUF001",  # en-dashes and minus signs in user-facing text are intentional
+    "RUF002",
+    "RUF003",
+    "SIM108",
+    "B905",    # zip(strict=) would change behaviour of v1 code paths; lengths are checked where it matters
+    "RUF007",
+    "RUF046",  # explicit int() casts on numpy scalars are kept for readable JSON output
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["creditiq_core", "creditiq_trainer"]
+
+# ---------------------------------------------------------------- mypy
+[tool.mypy]
+python_version = "3.11"
+files = ["packages/creditiq_core/src", "services/trainer/src"]
+strict = true
+# scikit-learn, LightGBM and SHAP ship no type information; their objects are Any.
+disallow_subclassing_any = false
+# pandas-stubs is strict about generics; bare DataFrame/ndarray annotations are fine for this codebase.
+disallow_any_generics = false
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "lightgbm.*", "xgboost.*", "shap.*", "joblib.*", "scipy.*"]
+ignore_missing_imports = true
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["packages/creditiq_core/tests", "services/trainer/tests"]
+# importlib mode: test files in different packages may share a basename (e.g. test_config.py).
+addopts = "-q --import-mode=importlib"
+filterwarnings = ["ignore::DeprecationWarning"]
