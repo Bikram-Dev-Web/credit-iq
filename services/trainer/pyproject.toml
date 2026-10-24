@@ -1,0 +1,16 @@
+[project]
+name = "creditiq-trainer"
+version = "2.0.0.dev0"
+description = "CreditIQ training pipeline: dataset readers, converters and the training CLI."
+requires-python = ">=3.11"
+dependencies = ["creditiq-core[boosting,shap]"]
+
+[tool.uv.sources]
+creditiq-core = { workspace = true }
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/creditiq_trainer"]
