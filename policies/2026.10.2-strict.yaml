@@ -1,0 +1,33 @@
+# A stricter alternative for comparison in the policy simulator (not active by default).
+version: "2026.10.2-strict"
+name: Strict review policy
+parent_version: "2026.10.1"
+description: Fixed 10% PD threshold everywhere and a tighter 35% affordability limit.
+pd_threshold:
+  default: 0.10
+band_cutoffs: [0.05, 0.10, 0.20]
+band_labels: [Low, Moderate, Elevated, High]
+hard_rules:
+  - id: annuity_to_income
+    type: ratio_limit
+    numerator: AMT_ANNUITY
+    denominator: AMT_INCOME_TOTAL
+    max: 0.35
+    action: flag
+    reason: Instalment above 35% of declared income (affordability check)
+  - id: missing_bureau_enquiries
+    type: missing_value
+    column: AMT_REQ_CREDIT_BUREAU_YEAR
+    action: flag
+    reason: No credit-bureau enquiry record; send for manual verification
+cost_matrix:
+  mode: per_loan
+  lost_margin_rate: 0.08
+  review_cost: 500
+economics:
+  lgd: 0.45
+  ccf: 1.0
+  annual_rate: 0.16
+  funding_rate: 0.07
+  opex_per_loan: 1500
+  horizon_years: 1
