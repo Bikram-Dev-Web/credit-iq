@@ -1,0 +1,67 @@
+[server]
+# Large enough for Home Credit application_train.csv (~160 MB). For bigger files,
+# copy the CSV into data/raw/ and use "Local file" in the Data Center instead.
+maxUploadSize = 400
+enableStaticServing = true
+# Skip the first-run "Email:" prompt (older Streamlit versions ignore this option).
+showEmailPrompt = false
+
+[browser]
+# Keep everything local: do not send usage statistics to Streamlit.
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+
+[theme]
+base = "light"
+primaryColor = "#1E4C8A"
+backgroundColor = "#F5F7FA"
+secondaryBackgroundColor = "#E9EEF4"
+textColor = "#12233D"
+linkColor = "#1E4C8A"
+borderColor = "#D9E1EB"
+showWidgetBorder = true
+baseRadius = "small"
+font = "'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif"
+headingFont = "'Source Serif 4', Georgia, 'Times New Roman', serif"
+headingFontWeights = 600
+chartCategoricalColors = ["#1E4C8A", "#C2873A", "#4E7FA8", "#2F6B5E", "#A23B3B", "#5D4A8A", "#8A9BB3"]
+
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-400-normal.woff2"
+weight = "400"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-500-normal.woff2"
+weight = "500"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "IBM Plex Sans"
+url = "app/static/fonts/ibm-plex-sans-latin-600-normal.woff2"
+weight = "600"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Source Serif 4"
+url = "app/static/fonts/source-serif-4-latin-500-normal.woff2"
+weight = "500"
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Source Serif 4"
+url = "app/static/fonts/source-serif-4-latin-600-normal.woff2"
+weight = "600"
+style = "normal"
+
+[theme.sidebar]
+backgroundColor = "#10243F"
+secondaryBackgroundColor = "#1A3253"
+textColor = "#DCE4EF"
+primaryColor = "#9DBBE3"
+borderColor = "#27446C"
+linkColor = "#B9CDEA"

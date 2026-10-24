@@ -1,0 +1,10 @@
+# Core dependencies — enough to run the whole app, all ten pages and the test suite.
+# Python 3.11 or 3.12 recommended (tested on 3.11 and 3.13; see docs/TROUBLESHOOTING.md).
+streamlit>=1.46,<2
+pandas>=2.2
+numpy>=2.0
+scikit-learn>=1.4
+plotly>=5.20
+joblib>=1.3
+jinja2>=3.1
+pytest>=8.0

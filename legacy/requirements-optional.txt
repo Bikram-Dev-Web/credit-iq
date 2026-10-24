@@ -1,0 +1,7 @@
+# Optional extras. The app works without them and says which fallback it is using.
+#   lightgbm – gradient boosting backend (fallback: scikit-learn HistGradientBoosting)
+#   shap     – TreeSHAP explanations for the Random Forest (fallback: occlusion attributions;
+#              Logistic Regression and LightGBM explanations do not need shap)
+lightgbm>=4.0
+shap>=0.44
+# xgboost>=2.0   # alternative boosting backend, used only if LightGBM is not installed

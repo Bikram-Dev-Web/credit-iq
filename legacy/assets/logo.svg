@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="48" viewBox="0 0 220 48">
+  <rect x="2" y="6" width="36" height="36" rx="5" fill="none" stroke="#9DBBE3" stroke-width="2.5"/>
+  <rect x="9" y="27" width="5" height="9" rx="1" fill="#9DBBE3"/>
+  <rect x="17.5" y="20" width="5" height="16" rx="1" fill="#9DBBE3"/>
+  <rect x="26" y="13" width="5" height="23" rx="1" fill="#E8EEF6"/>
+  <text x="48" y="33" font-family="'Source Serif 4', Georgia, 'Times New Roman', serif" font-size="25" font-weight="600" fill="#E8EEF6">CreditIQ</text>
+</svg>

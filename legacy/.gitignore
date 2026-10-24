@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Local environment and secrets
+.env
+
+# Runtime artefacts (may contain model internals or borrower-derived data)
+storage/
+models/*
+!models/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Real datasets are never committed — download them yourself (see docs/DATA_SOURCES.md)
+data/raw/*
+!data/raw/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
