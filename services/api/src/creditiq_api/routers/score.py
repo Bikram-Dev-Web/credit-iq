@@ -55,6 +55,7 @@ def _build(request: Request, model: LoadedModel, policy: Policy, body: ScoreRequ
         "threshold_source": d.threshold_source, "flagged_for_review": d.flagged, "outcome": d.outcome,
         "ead": s.ead, "lgd": policy.economics.lgd, "expected_loss": s.expected_loss, "top_reasons": s.reasons,
         "explanation_method": s.explanation.get("method", ""), "explanation_units": s.explanation.get("units", ""),
+        "explanation_base_value": s.explanation.get("base_value"), "explanation_exact": bool(s.explanation.get("exact")),
         "uncertainty": scoring.uncertainty(model, policy, d.band), "warnings": s.warnings,
         "caveats": scoring.caveats(model), "latency_ms": round(latency_ms, 3),
         "data_provenance": scoring.data_provenance(model),

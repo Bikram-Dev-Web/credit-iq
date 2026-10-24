@@ -14,7 +14,6 @@ from pydantic import ValidationError
 
 from creditiq_api.model_store import LoadedModel
 from creditiq_core import explainability as xai
-from creditiq_core._frames import iter_rows
 from creditiq_core.finance.economics import expected_loss
 from creditiq_core.formatting import val
 from creditiq_core.jsonsafe import to_json
@@ -93,13 +92,10 @@ def exposure_of(model: LoadedModel, applicant: dict[str, Any], override: float |
     return max(e, 0.0) * policy.economics.ccf
 
 
-def reasons(model: LoadedModel, applicant: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    expl, meta = xai.local_explanation(model.artifact.model, pd.DataFrame([applicant]), model.artifact.input_schema,
-                                       model.artifact.transformed_mean, top=TOP_REASONS)
-    rows = [{"feature": str(r.feature), "value": val(r.value), "contribution": float(r.contribution),
-             "direction": "increases_risk" if r.contribution >= 0 else "decreases_risk", "derived": bool(r.derived)}
-            for r in iter_rows(expl)]
-    return rows, meta
+def reasons(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{"feature": str(r["feature"]), "value": val(r["value"]), "contribution": float(r["contribution"]),
+             "direction": "increases_risk" if r["contribution"] >= 0 else "decreases_risk", "derived": bool(r["derived"])}
+            for r in rows]
 
 
 def data_provenance(model: LoadedModel) -> str:
@@ -119,7 +115,7 @@ def score_provenance(model: LoadedModel, decide_mode: bool) -> dict[str, list[P]
     prov = {
         "pd": [m], "raw_score": [m], "risk_band": [m, P.ASSUMPTION], "threshold": [P.MEASURED, P.ASSUMPTION],
         "flagged_for_review": [m, P.ASSUMPTION], "ead": [P.OBSERVED, P.ASSUMPTION], "lgd": [P.ASSUMPTION],
-        "expected_loss": [m, P.ASSUMPTION], "contribution": [m], "latency_ms": [P.MEASURED],
+        "expected_loss": [m, P.ASSUMPTION], "contribution": [m], "explanation_base_value": [m], "latency_ms": [P.MEASURED],
         "test_roc_auc": labels(model, P.MEASURED), "test_calibration_error": labels(model, P.MEASURED),
         "band_observed_default_rate": labels(model, P.OBSERVED), "band_mean_pd": labels(model, m),
         "band_n": labels(model, P.OBSERVED),
@@ -144,7 +140,9 @@ class Scored:
 
 def score_one(model: LoadedModel, policy: Policy, applicant: dict[str, Any], exposure: float | None,
               with_rules: bool) -> Scored:
-    raw = float(model.artifact.predict_score(applicant)[0])
+    # one pipeline pass gives both the raw score and the exact explanation (serving fast path)
+    raw, top_rows, meta = xai.explain_one(model.artifact.model, pd.DataFrame([applicant]), model.artifact.input_schema,
+                                          model.artifact.transformed_mean, top=TOP_REASONS)
     pd_value = float(model.artifact.model.calibrator.transform(np.array([raw]))[0])
     if with_rules:
         decision = decide(policy, applicant, pd_value, model.artifact.threshold)
@@ -153,8 +151,7 @@ def score_one(model: LoadedModel, policy: Policy, applicant: dict[str, Any], exp
         decision = decide(no_rules, applicant, pd_value, model.artifact.threshold)
     ead = exposure_of(model, applicant, exposure, policy)
     el = float(expected_loss(pd_value, policy.economics.lgd, ead))
-    rs, meta = reasons(model, applicant)
-    return Scored(applicant, pd_value, raw, decision, ead, el, rs, meta, input_warnings(model, applicant))
+    return Scored(applicant, pd_value, raw, decision, ead, el, reasons(top_rows), meta, input_warnings(model, applicant))
 
 
 def uncertainty(model: LoadedModel, policy: Policy, band: str) -> dict[str, Any]:

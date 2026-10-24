@@ -86,6 +86,10 @@ class ScoreResponse(WithProvenance):
     top_reasons: list[Reason]
     explanation_method: str
     explanation_units: str
+    explanation_base_value: float | None = Field(
+        description="Base value of an exact explanation (in explanation_units); base + contributions = the model's "
+                    "output in those units. null for approximate (occlusion) explanations.")
+    explanation_exact: bool
     uncertainty: Uncertainty
     warnings: list[str]
     caveats: list[str]
