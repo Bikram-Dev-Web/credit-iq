@@ -18,12 +18,12 @@ build/
 !.env.example
 
 # Runtime artefacts (may contain model internals or borrower-derived data)
-mlruns/
-mlartifacts/
-storage/
-models/
-reports/
-artifacts/
+/mlruns/
+/mlartifacts/
+/storage/
+/models/
+/reports/
+/artifacts/
 
 # Real datasets are never committed. Download them yourself (see docs/DATA_SOURCES.md)
 data/raw/*
