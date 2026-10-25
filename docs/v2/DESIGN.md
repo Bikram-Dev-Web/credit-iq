@@ -42,8 +42,9 @@ about 6:1; light `#5b4ae0` on white about 6:1).
 
 ## Typography
 
-- **Geist Sans** for the UI and **Geist Mono** for numbers, IDs, versions and code (`geist` package; no serif
-  fonts anywhere).
+- **IBM Plex Sans** for the UI and **IBM Plex Mono** for numbers, IDs, versions and code (loaded with
+  `next/font/google`, self-hosted at build time; no serif fonts anywhere). Plex was drawn for technical and
+  financial software and has clear tabular figures; it also keeps the app from looking like every default template.
 - Tabular figures for every number: `font-variant-numeric: tabular-nums` on tables, inputs and chart text, plus the
   `.num` utility.
 - Scale (px): 11 (labels, pills) · 12 (secondary) · 13 (body, tables) · 14 (base) · 16 · 20 (page titles) · 24 (KPI

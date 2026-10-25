@@ -124,8 +124,8 @@
   --color-warning-soft: var(--warning-soft);
   --color-serious-soft: var(--serious-soft);
   --color-critical-soft: var(--critical-soft);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
@@ -148,7 +148,6 @@
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.5;
-    font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
   }
   /* every number uses tabular figures */

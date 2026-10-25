@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CreditIQ Team Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --ink: #17171c; --ink-2: #4a4a55; --ink-3: #7b7b88; --line: #e6e6ec; --soft: #f6f6f9;
+    --accent: #5b4ae0; --accent-2: #8b7dff; --accent-soft: #eeebff;
+    --ok: #16a34a; --ok-soft: #e8f7ee; --warn: #d97706; --warn-soft: #fdf3e2; --bad: #dc2626; --bad-soft: #fdecec;
+    --blue: #2563eb; --blue-soft: #e9f0fe;
+    --mono: "IBM Plex Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #fff; }
+  body { font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif; color: var(--ink); font-size: 10.2pt; line-height: 1.5;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 16mm 16mm 14mm; position: relative; overflow: hidden;
+          page-break-after: always; break-after: page; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+
+  /* running header / footer */
+  .top { display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: var(--ink-3);
+         letter-spacing: .04em; text-transform: uppercase; margin-bottom: 9mm; }
+  .top .brand { display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--ink); letter-spacing: 0; text-transform: none; font-size: 9pt; }
+  .foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; display: flex; justify-content: space-between;
+          font-size: 7.5pt; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 3mm; }
+  .mark { width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, var(--accent-2), var(--accent));
+          display: inline-flex; align-items: center; justify-content: center; }
+  .mark svg { width: 12px; height: 12px; }
+
+  /* type */
+  .eyebrow { font-size: 8.5pt; font-weight: 700; color: var(--accent); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 2mm; }
+  h1 { font-size: 24pt; line-height: 1.12; letter-spacing: -.02em; font-weight: 800; margin-bottom: 3mm; }
+  h2 { font-size: 13pt; letter-spacing: -.01em; font-weight: 700; margin: 6mm 0 2.5mm; }
+  h3 { font-size: 10.5pt; font-weight: 700; margin-bottom: 1.2mm; }
+  p { color: var(--ink-2); }
+  .lead { font-size: 11.5pt; color: var(--ink-2); max-width: 160mm; margin-bottom: 4mm; }
+  code, .mono { font-family: var(--mono); font-size: .88em; }
+  code { background: var(--soft); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; color: var(--ink); }
+  b, strong { color: var(--ink); }
+
+  /* layout bits */
+  .grid { display: grid; gap: 4mm; }
+  .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: 1fr 1fr 1fr; } .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 4mm 4.5mm; background: #fff; }
+  .card.soft { background: var(--soft); border-color: transparent; }
+  .card p { font-size: 9.3pt; }
+  .icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+          background: var(--accent-soft); color: var(--accent); margin-bottom: 2.5mm; }
+  .icon svg { width: 17px; height: 17px; }
+  .stat { border-left: 3px solid var(--accent); padding: 1mm 0 1mm 3.5mm; }
+  .stat .n { font-size: 19pt; font-weight: 800; letter-spacing: -.02em; font-family: var(--mono); }
+  .stat .l { font-size: 8.3pt; color: var(--ink-3); line-height: 1.3; }
+  ul.clean { list-style: none; }
+  ul.clean li { position: relative; padding-left: 4.5mm; margin-bottom: 1.3mm; color: var(--ink-2); font-size: 9.4pt; }
+  ul.clean li::before { content: ""; position: absolute; left: 0; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .callout { border-radius: 10px; padding: 3.5mm 4.5mm; font-size: 9.3pt; color: var(--ink-2); display: flex; gap: 3mm; }
+  .callout.info { background: var(--accent-soft); } .callout.warn { background: var(--warn-soft); } .callout.ok { background: var(--ok-soft); }
+  .callout .t { font-weight: 700; color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  th { text-align: left; font-size: 7.8pt; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 600;
+       padding: 2mm 2.5mm; border-bottom: 1.5px solid var(--ink); }
+  td { padding: 2mm 2.5mm; border-bottom: 1px solid var(--line); color: var(--ink-2); vertical-align: top; }
+  td:first-child { color: var(--ink); font-weight: 600; }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 7pt; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+         border-radius: 999px; padding: .5mm 2mm; border: 1px solid; white-space: nowrap; }
+  .t-obs { color: #15803d; border-color: #86efac; background: #f0fdf4; }
+  .t-mea { color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; }
+  .t-mod { color: #6d28d9; border-color: #c4b5fd; background: #f5f3ff; }
+  .t-ass { color: #b45309; border-color: #fcd34d; background: #fffbeb; }
+  .t-sim { color: #0e7490; border-color: #67e8f9; background: #ecfeff; }
+  .t-syn { color: #c2410c; border-color: #fdba74; background: #fff7ed; }
+  pre { font-family: var(--mono); font-size: 8.2pt; line-height: 1.55; background: #15151b; color: #e7e7ee; border-radius: 9px;
+        padding: 3.5mm 4.5mm; white-space: pre-wrap; word-break: break-word; }
+  pre .c { color: #8a8aa0; } pre .k { color: #b3a8ff; } pre .s { color: #7ee2b8; }
+  .shot { border-radius: 9px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 6px 22px rgba(23,23,40,.10); }
+  .shot img { display: block; width: 100%; }
+  .caption { font-size: 8pt; color: var(--ink-3); margin-top: 1.5mm; }
+
+  /* cover */
+  .cover { background: radial-gradient(120% 80% at 85% 0%, #2a2160 0%, #101016 55%), #101016; color: #fff; padding: 20mm 18mm; }
+  .cover .brandbig { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 13pt; }
+  .cover .brandbig .mark { width: 30px; height: 30px; border-radius: 8px; } .cover .brandbig .mark svg { width: 19px; height: 19px; }
+  .cover h1 { font-size: 40pt; color: #fff; margin-top: 30mm; line-height: 1.04; letter-spacing: -.035em; }
+  .cover h1 span { background: linear-gradient(90deg, #a99dff, #6f5cf0); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cover .sub { color: #b9b9c8; font-size: 13pt; max-width: 135mm; margin-top: 5mm; }
+  .cover .chips { display: flex; gap: 2mm; margin-top: 8mm; flex-wrap: wrap; }
+  .cover .chip { border: 1px solid #3a3a4d; color: #d4d4e0; border-radius: 999px; padding: 1.2mm 3.5mm; font-size: 8.5pt; font-family: var(--mono); }
+  .cover .shot { position: absolute; left: 18mm; right: -30mm; bottom: 34mm; border-color: #2c2c3a; box-shadow: 0 25px 60px rgba(0,0,0,.55); border-radius: 12px; }
+  .cover .bottom { position: absolute; left: 18mm; right: 18mm; bottom: 14mm; display: flex; justify-content: space-between; align-items: flex-end; gap: 10mm; text-align: left; font-size: 8pt; color: #8d8da0; }
+  .cover .toc { position: absolute; right: 18mm; top: 20mm; text-align: right; font-size: 8.3pt; color: #8d8da0; line-height: 1.9; }
+  .cover .toc b { color: #d4d4e0; font-weight: 600; font-family: var(--mono); margin-right: 2mm; }
+
+  /* architecture */
+  .arch { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); padding: 6mm 5mm 5mm; }
+  .lane { display: flex; align-items: stretch; gap: 0; }
+  .node { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 3mm; text-align: center; }
+  .node .nt { font-weight: 700; font-size: 9.3pt; }
+  .node .nd { font-size: 7.6pt; color: var(--ink-3); line-height: 1.35; margin-top: .8mm; }
+  .node.hl { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .arrow { width: 9mm; display: flex; align-items: center; justify-content: center; color: var(--ink-3); flex: none; }
+  .vlink { text-align: center; font-size: 7.5pt; color: var(--ink-3); padding: 1.5mm 0; font-family: var(--mono); }
+  .lbl { font-size: 7.3pt; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); font-weight: 700; margin-bottom: 2mm; }
+
+  /* timeline */
+  .steps { counter-reset: s; position: relative; }
+  .step { display: grid; grid-template-columns: 9mm 1fr; gap: 3mm; position: relative; padding-bottom: 3.3mm; }
+  .step::before { counter-increment: s; content: counter(s); width: 7.5mm; height: 7.5mm; border-radius: 50%; background: var(--accent); color: #fff;
+                  font-weight: 700; font-size: 8.8pt; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; }
+  .step:not(:last-child)::after { content: ""; position: absolute; left: 3.6mm; top: 7.5mm; bottom: 0; width: 1.5px; background: #d9d5fb; }
+  .step h3 { margin-top: .9mm; font-size: 9.8pt; }
+  .step p { font-size: 9pt; }
+  .step .where { font-family: var(--mono); font-size: 7.4pt; color: var(--accent); }
+
+  /* bands */
+  .bands { display: flex; border-radius: 8px; overflow: hidden; font-size: 8.3pt; margin: 2mm 0 1mm; }
+  .bands div { flex: 1; padding: 2.2mm 3mm; color: #fff; font-weight: 600; }
+  .bands span { display: block; font-weight: 400; font-size: 7.6pt; opacity: .9; font-family: var(--mono); }
+
+  /* feature tour */
+  .feat { display: grid; grid-template-columns: 1fr; gap: 3mm; }
+  .frow { display: grid; grid-template-columns: 68mm 1fr; gap: 5mm; align-items: center; }
+  .fhead { display: flex; align-items: baseline; gap: 2.5mm; }
+  .fnum { font-family: var(--mono); font-size: 8pt; color: var(--accent); font-weight: 600; }
+  .mini { border: 1px solid var(--line); border-radius: 9px; padding: 3mm 3.5mm; }
+  .mini h3 { font-size: 9.6pt; } .mini p { font-size: 8.7pt; line-height: 1.45; }
+  .who { font-size: 7pt; font-family: var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+
+  table.tight td { padding: .9mm 2.5mm; }
+  .kbd { font-family: var(--mono); font-size: 8pt; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 1.5mm; background: #fff; }
+  .demo .step::before { background: var(--ink); }
+  .demo .step:not(:last-child)::after { background: var(--line); }
+  .time { font-family: var(--mono); font-size: 7.5pt; color: var(--ink-3); float: right; }
+</style>
+</head>
+<body>
+
+<!-- ============================== 1. COVER ============================== -->
+<section class="page cover">
+  <div class="brandbig"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ</div>
+  <div class="toc">
+    <div><b>01</b>The app in one minute</div>
+    <div><b>02</b>How it is built</div>
+    <div><b>03</b>The two workflows</div>
+    <div><b>04</b>Key ideas behind the numbers</div>
+    <div><b>05</b>Feature tour</div>
+    <div><b>06</b>How to run it</div>
+    <div><b>07</b>Five-minute demo</div>
+    <div><b>08</b>Troubleshooting &amp; glossary</div>
+  </div>
+  <h1>Team guide to<br><span>CreditIQ v2</span></h1>
+  <p class="sub">How the app works, what every feature does, and how to run it on your own laptop.</p>
+  <div class="chips">
+    <span class="chip">Python · FastAPI</span><span class="chip">scikit-learn · LightGBM</span><span class="chip">Next.js · TypeScript</span><span class="chip">MLflow</span>
+  </div>
+  <div class="shot"><img src="../v2/screenshots/overview-dark.png" alt="CreditIQ overview page"></div>
+  <div class="bottom">
+    <span>Group project · October 2026<br>github.com/Bikram-Dev-Web/credit-iq</span>
+    <span>Educational decision-support prototype, not for real credit decisions.</span>
+  </div>
+</section>
+
+<!-- ============================== 2. ONE MINUTE ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>01 · The app in one minute</span></div>
+
+  <div class="eyebrow">01 · Overview</div>
+  <h1>What CreditIQ does</h1>
+  <p class="lead">CreditIQ estimates how likely a loan applicant is to run into repayment trouble, checks the result against a lending policy, explains why, and keeps an audit trail. It is a decision-<em>support</em> tool: a person makes the decision.</p>
+
+  <div class="grid g3" style="margin-top:5mm">
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg></div>
+      <h3>1 · Predict the risk</h3>
+      <p>A machine-learning model reads the application (income, loan amount, external credit scores…) and outputs a <b>probability of default (PD)</b>, for example 6.0%.</p>
+    </div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></div>
+      <h3>2 · Apply the policy</h3>
+      <p>A separate, versioned <b>lending policy</b> compares the PD with a threshold and runs rules (e.g. instalment above 45% of income). Result: <i>within threshold</i> or <i>flagged for review</i>.</p>
+    </div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <h3>3 · Explain, audit, watch</h3>
+      <p>Every answer lists its top reasons, is written to an <b>audit log</b> (without personal data), and a <b>monitor</b> warns when incoming applicants start to look different from the training data.</p>
+    </div>
+  </div>
+
+  <h2>The numbers worth remembering</h2>
+  <div class="grid g4">
+    <div class="stat"><div class="n">0.748</div><div class="l">test ROC-AUC on the real Home Credit data (LightGBM)</div></div>
+    <div class="stat"><div class="n">0.813</div><div class="l">test ROC-AUC on the bundled synthetic data (logistic regression)</div></div>
+    <div class="stat"><div class="n">10</div><div class="l">dashboard pages, 35 API endpoints</div></div>
+    <div class="stat"><div class="n">178</div><div class="l">automated Python tests + browser tests, run by CI on every push</div></div>
+  </div>
+
+  <h2>Two datasets</h2>
+  <div class="grid g2">
+    <div class="card soft">
+      <h3>Synthetic sample <span class="tag t-syn">synthetic</span></h3>
+      <p>20,000 fabricated applications shipped in the repo (<code>data/sample_credit_data.csv</code>). Used by default, so the app runs for anyone straight after cloning. Its results say nothing about real borrowers.</p>
+    </div>
+    <div class="card soft">
+      <h3>Home Credit (real) <span class="tag t-obs">observed</span></h3>
+      <p>The free Kaggle <i>Home Credit Default Risk</i> file. Not in the repo (too large, licence). Download <code>application_train.csv</code> into <code>data/raw/</code> to train the real model (page 8).</p>
+    </div>
+  </div>
+
+  <h2>What it deliberately does not do</h2>
+  <div class="callout warn">
+    <div><span class="t">Never approve or deny.</span> Outcomes are only “within threshold” or “flagged for review”. Gender, age and family status are never model inputs; they are used only to <i>check</i> fairness. The applicant’s raw inputs are never stored. This is a university prototype, not a tool for real lending.</div>
+  </div>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>2</span></div>
+</section>
+
+<!-- ============================== 3. ARCHITECTURE ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>02 · How it is built</span></div>
+
+  <div class="eyebrow">02 · Architecture</div>
+  <h1>Five pieces, one shared library</h1>
+  <p class="lead">All the maths lives in one Python library, <code>creditiq_core</code>. The trainer, the API and the monitor import it, so a number is computed the same way everywhere.</p>
+
+  <div class="arch">
+    <div class="lbl">Offline: build a model</div>
+    <div class="lane">
+      <div class="node"><div class="nt">CSV data</div><div class="nd">synthetic or<br>Home Credit</div></div>
+      <div class="arrow"><svg width="22" height="10"><path d="M0 5h18M14 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+      <div class="node"><div class="nt">Trainer</div><div class="nd">trains 3 models,<br>keeps the best</div></div>
+      <div class="arrow"><svg width="22" height="10"><path d="M0 5h18M14 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+      <div class="node"><div class="nt">Model registry</div><div class="nd">versions + aliases:<br>production · staging</div></div>
+    </div>
+    <div class="vlink">▼ the API loads the version tagged “production”</div>
+    <div class="lbl">Online: answer requests</div>
+    <div class="lane">
+      <div class="node"><div class="nt">Dashboard</div><div class="nd">Next.js web app<br>localhost:3100</div></div>
+      <div class="arrow"><svg width="22" height="10"><path d="M0 5h18M14 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+      <div class="node hl"><div class="nt">Scoring API</div><div class="nd">FastAPI<br>localhost:8010</div></div>
+      <div class="arrow"><svg width="22" height="10"><path d="M0 5h18M14 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+      <div class="node"><div class="nt">Policy engine</div><div class="nd">YAML rules in<br><span class="mono">policies/</span></div></div>
+      <div class="arrow"><svg width="22" height="10"><path d="M0 5h18M14 1l5 4-5 4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+      <div class="node"><div class="nt">Audit log</div><div class="nd">SQLite locally,<br>Postgres in Docker</div></div>
+    </div>
+    <div class="vlink">▲ the monitor reads the audit log and new batches, and raises drift alerts</div>
+    <div class="lane">
+      <div class="node"><div class="nt">Monitor job</div><div class="nd">PSI, missingness,<br>PD drift</div></div>
+      <div class="arrow"></div>
+      <div class="node"><div class="nt">Prometheus + Grafana</div><div class="nd">latency, traffic, alerts<br>(Docker setup only)</div></div>
+    </div>
+  </div>
+
+  <h2>Who does what</h2>
+  <table>
+    <tr><th style="width:30%">Folder</th><th>Role</th></tr>
+    <tr><td><span class="mono">packages/creditiq_core</span></td><td>The library: data checks, features, models, calibration, explanations, fairness, drift, lending economics, policy engine.</td></tr>
+    <tr><td><span class="mono">services/trainer</span></td><td><code>creditiq-train</code>: trains from a YAML config, writes a versioned model package, promotes and rolls back.</td></tr>
+    <tr><td><span class="mono">services/api</span></td><td><code>creditiq-api</code>: the REST API under <code>/v1</code> (score, decide, models, policies, portfolio, fairness, monitoring…).</td></tr>
+    <tr><td><span class="mono">services/monitor</span></td><td><code>creditiq-monitor</code>: scheduled drift checks over the audit log and an inbox of CSV batches.</td></tr>
+    <tr><td><span class="mono">web</span></td><td>The dashboard. It never holds API keys in the browser: a small server-side proxy adds them.</td></tr>
+    <tr><td><span class="mono">policies</span></td><td>Lending policies as versioned YAML files (<code>2026.10.1</code> baseline, <code>2026.10.2-strict</code>).</td></tr>
+    <tr><td><span class="mono">legacy</span></td><td>The original v1 Streamlit app, unchanged. v2 reproduces its numbers exactly.</td></tr>
+  </table>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>3</span></div>
+</section>
+
+<!-- ============================== 4. WORKFLOWS ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>03 · The two workflows</span></div>
+
+  <div class="eyebrow">03 · Workflow</div>
+  <h1>From data to a decision</h1>
+  <p class="lead">There are two loops. Training happens rarely and offline; scoring happens on every request, in tens of milliseconds.</p>
+
+  <div class="grid g2" style="gap:7mm; margin-top:4mm">
+    <div>
+      <h2 style="margin-top:0">A · Training a model</h2>
+      <div class="steps">
+        <div class="step"><div><h3>Load and check the data</h3><p>Schema and quality checks; the target mapping must be written in the config (which value means “default”).</p><div class="where">configs/*.yaml</div></div></div>
+        <div class="step"><div><h3>Split 60 / 20 / 20</h3><p>Train, validation and test, stratified, seed 42. Test is touched once, at the very end.</p></div></div>
+        <div class="step"><div><h3>Build features</h3><p>Ratios such as credit ÷ income and instalment ÷ income; fill gaps, encode categories. Sensitive attributes are removed.</p></div></div>
+        <div class="step"><div><h3>Train three model families</h3><p>Logistic regression, random forest, LightGBM. The best <b>validation</b> ROC-AUC wins.</p></div></div>
+        <div class="step"><div><h3>Calibrate and pick the threshold</h3><p>Turn raw scores into honest probabilities and choose the review threshold, both on validation only.</p></div></div>
+        <div class="step"><div><h3>Evaluate on test, register</h3><p>Final metrics, model card and quality report go into a new registry version, tagged <i>staging</i> or <i>production</i>.</p><div class="where">models/registry/creditiq-pd</div></div></div>
+      </div>
+    </div>
+    <div>
+      <h2 style="margin-top:0">B · Life of one decision</h2>
+      <div class="steps">
+        <div class="step"><div><h3>Analyst fills the form</h3><p>On <i>Score an applicant</i>. The form is generated from the model’s own input list.</p></div></div>
+        <div class="step"><div><h3>Proxy adds the key</h3><p>The web server forwards the request to the API with the API key, so the key never reaches the browser.</p><div class="where">POST /v1/decide</div></div></div>
+        <div class="step"><div><h3>Validate and score</h3><p>Bad fields get a clear error. The model returns a calibrated PD and the top reasons.</p></div></div>
+        <div class="step"><div><h3>Apply the policy</h3><p>PD vs threshold, plus hard rules. Outcome: within threshold or flagged for review, with reasons.</p></div></div>
+        <div class="step"><div><h3>Write the audit record</h3><p>Model and policy versions, scores, rules fired, and a keyed hash of the inputs. If the database is down, no answer is given (503).</p></div></div>
+        <div class="step"><div><h3>Show the result</h3><p>PD gauge, risk band, expected loss, the reasons chart. The monitor later uses these scores to spot drift.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info" style="margin-top:3mm">
+    <div><span class="t">Swapping models without downtime.</span> When an admin promotes another version, the API notices within 30 seconds, loads it in the background and switches over in one step. Requests in flight finish on the old model.</div>
+  </div>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>4</span></div>
+</section>
+
+<!-- ============================== 5. KEY IDEAS ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>04 · Key ideas</span></div>
+
+  <div class="eyebrow">04 · Concepts</div>
+  <h1>The ideas behind the numbers</h1>
+  <p class="lead">Where each number on screen comes from.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>Probability of default (PD)</h3>
+      <p>The model’s estimate that this applicant has the dataset’s “default” event. For Home Credit that event is <b>early payment difficulty</b>, not a 12-month default. A PD of 6% means: out of 100 similar applicants, about 6 would have trouble.</p>
+    </div>
+    <div class="card">
+      <h3>The review threshold (e.g. 14.4%)</h3>
+      <p>Chosen automatically at training time: the trainer tries every cut-off on the <b>validation</b> set and keeps the one with the best F1 score (balance of catching defaults vs flagging good applicants). Synthetic model: <b>14.4%</b>. Home Credit model: <b>12.3%</b>. The policy can override it per segment (revolving loans: 12%).</p>
+    </div>
+  </div>
+
+  <h2>Risk bands</h2>
+  <div class="bands">
+    <div style="background:#16a34a">Low<span>PD &lt; 5%</span></div>
+    <div style="background:#eab308">Moderate<span>5 – 10%</span></div>
+    <div style="background:#f08a5d">Elevated<span>10 – 20%</span></div>
+    <div style="background:#dc2626">High<span>≥ 20%</span></div>
+  </div>
+  <p style="font-size:8.6pt">Bands are set by the policy (<code>band_cutoffs: [0.05, 0.10, 0.20]</code>). Bands describe risk; only the threshold and the rules decide the outcome.</p>
+
+  <div class="grid g2" style="margin-top:4mm">
+    <div class="card">
+      <h3>Expected loss</h3>
+      <p><span class="mono" style="color:var(--ink)">EL = PD × LGD × EAD</span><br>LGD (loss given default) is an <i>assumption</i> of 45%; EAD is the loan amount. In the screenshot on page 6: 6.0% × 45% × 487,500 ≈ 13,060.</p>
+    </div>
+    <div class="card">
+      <h3>“Why this score”</h3>
+      <p>Each input’s exact contribution, in log-odds. Red bars push the risk up, blue bars push it down. It shows <b>association, not causation</b>.</p>
+    </div>
+  </div>
+
+  <h2>Provenance tags: every number says where it came from</h2>
+  <table class="tight">
+    <tr><th style="width:24%">Tag</th><th>Meaning</th><th style="width:34%">Example</th></tr>
+    <tr><td><span class="tag t-obs">observed</span></td><td>Counted from real records</td><td>Decisions per day, portfolio size</td></tr>
+    <tr><td><span class="tag t-mea">measured</span></td><td>Measured on held-out data</td><td>ROC-AUC 0.813, flag rate</td></tr>
+    <tr><td><span class="tag t-mod">model</span></td><td>Output of the model</td><td>PD 6.0%, raw score</td></tr>
+    <tr><td><span class="tag t-ass">assumption</span></td><td>A number we chose</td><td>LGD 45%, interest rate 16%</td></tr>
+    <tr><td><span class="tag t-sim">simulated</span></td><td>Result of a what-if or stress test</td><td>Policy simulator, scenarios</td></tr>
+    <tr><td><span class="tag t-syn">synthetic</span></td><td>Based on fabricated data</td><td>Anything from the bundled sample</td></tr>
+  </table>
+
+  <div class="callout ok" style="margin-top:3mm">
+    <div><span class="t">Why results are trustworthy.</span> Calibration and the threshold use validation only, the test split is used once, leakage checks run on training rows, and sensitive attributes stay out of the model. These rules are covered by automated tests.</div>
+  </div>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>5</span></div>
+</section>
+
+<!-- ============================== 6. FEATURE TOUR 1 ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>05 · Feature tour</span></div>
+
+  <div class="eyebrow">05 · Feature tour</div>
+  <h1>Every page in the dashboard</h1>
+  <p class="lead">Ten pages in the left sidebar. The top bar always shows the model version, the policy version and whether the data is synthetic.</p>
+
+  <div class="frow" style="margin-top:3mm">
+    <div>
+      <div class="fhead"><span class="fnum">01</span><h3>Overview</h3></div>
+      <p style="font-size:9pt">The home page: portfolio size, 12-month expected loss, flag rate, model ROC-AUC, drift status, and charts of daily decisions and loss by risk band.</p>
+      <div class="fhead" style="margin-top:4mm"><span class="fnum">02</span><h3>Score an applicant</h3></div>
+      <p style="font-size:9pt">The main feature. Enter an application and press <b>Assess applicant</b>. You get the PD gauge, risk band, expected loss, threshold, which policy rules fired, and the reasons chart.</p>
+      <p style="font-size:9pt; margin-top:1.5mm">Turn on <b>What-if</b> and the result updates live as you change inputs. Blank fields are fine: the model fills them from training data.</p>
+    </div>
+    <div class="shot"><img src="../v2/screenshots/score-light.png" alt="Score an applicant page"></div>
+  </div>
+
+  <div class="grid g2" style="margin-top:5mm">
+    <div class="mini"><div class="fhead"><span class="fnum">03</span><h3>Decisions log</h3></div>
+      <p>The audit trail: every decision with time, model and policy versions, PD, outcome, rules fired and reasons. Filter and open any row.</p></div>
+    <div class="mini"><div class="fhead"><span class="fnum">04</span><h3>Portfolio</h3></div>
+      <p>The held-out test applicants as a loan book: exposure and expected loss by band, predicted vs observed default rate by decile, concentration (HHI) and loss curves.</p></div>
+  </div>
+
+  <div class="frow" style="margin-top:5mm; grid-template-columns: 1fr 78mm">
+    <div class="shot"><img src="../v2/screenshots/policies-light.png" alt="Policy simulator page"></div>
+    <div>
+      <div class="fhead"><span class="fnum">05</span><h3>Policy simulator</h3></div>
+      <p style="font-size:9pt">Change thresholds, rules and costs in a form or as YAML, then <b>simulate</b>: flag rate, expected loss, profit and the confusion matrix, side by side with the active policy.</p>
+      <p style="font-size:9pt; margin-top:1.5mm">An <span class="who">admin</span> can save the draft as a new policy version and activate it. No retraining is needed.</p>
+    </div>
+  </div>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>6</span></div>
+</section>
+
+<!-- ============================== 7. FEATURE TOUR 2 ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>05 · Feature tour (continued)</span></div>
+
+  <div class="frow" style="grid-template-columns: 1fr 78mm">
+    <div class="shot"><img src="../v2/screenshots/models-light.png" alt="Models page"></div>
+    <div>
+      <div class="fhead"><span class="fnum">06</span><h3>Models</h3></div>
+      <p style="font-size:9pt">Every registered version with its metrics, ROC and precision-recall curves, calibration chart, model card and a threshold explorer (validation data only).</p>
+      <p style="font-size:9pt; margin-top:1.5mm">An <span class="who">admin</span> can <b>promote</b> a version to production or <b>roll back</b> to the previous one. The API switches within 30 seconds.</p>
+    </div>
+  </div>
+
+  <div class="frow" style="margin-top:6mm">
+    <div>
+      <div class="fhead"><span class="fnum">07</span><h3>Monitoring</h3></div>
+      <p style="font-size:9pt">Is today’s data still like the training data? Shows drift per input (PSI), PD drift, missing values, and the alert history.</p>
+      <p style="font-size:9pt; margin-top:1.5mm"><b>Replay shifted demo batch</b> runs a drift check on a prepared batch that matches the live model, and should raise a <b>warning</b>. <b>Check a CSV batch</b> lets you upload your own file.</p>
+      <p style="font-size:8.4pt; margin-top:1.5mm; color:var(--ink-3)">PSI below 0.10 is fine, 0.10–0.25 is a warning, above 0.25 is significant.</p>
+    </div>
+    <div class="shot"><img src="../v2/screenshots/monitoring-light.png" alt="Monitoring page"></div>
+  </div>
+
+  <div class="grid g3" style="margin-top:6mm">
+    <div class="mini"><div class="fhead"><span class="fnum">08</span><h3>Scenarios</h3></div>
+      <p>Lending economics: break-even PD and interest rate, a PD × rate profit heatmap, stress tests (higher PDs or losses) and loan NPV.</p></div>
+    <div class="mini"><div class="fhead"><span class="fnum">09</span><h3>Fairness</h3></div>
+      <p>Compares flag rates and errors across gender, age and family-status groups, plus a scan for inputs that act as stand-ins for them.</p></div>
+    <div class="mini"><div class="fhead"><span class="fnum">10</span><h3>Docs &amp; about</h3></div>
+      <p>Method, limitations, the disclaimer and links to the API docs, MLflow and Grafana when they are running.</p></div>
+  </div>
+
+  <h2>Two roles</h2>
+  <div class="grid g2">
+    <div class="card soft"><h3>Analyst <span class="who">default</span></h3><p>Can score, browse, simulate and run drift checks. Cannot change what is live.</p></div>
+    <div class="card soft"><h3>Admin <span class="who">switch in the top bar</span></h3><p>Can also promote or roll back models and save or activate policies. Every admin action is logged.</p></div>
+  </div>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>7</span></div>
+</section>
+
+<!-- ============================== 8. HOW TO RUN ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>06 · How to run it</span></div>
+
+  <div class="eyebrow">06 · Setup</div>
+  <h1>Run it on your laptop</h1>
+  <p class="lead">No cloud account and no Docker needed. You need three free tools, then one command.</p>
+
+  <div class="grid g3">
+    <div class="card"><h3>Git</h3><p>git-scm.com, to clone the repository.</p></div>
+    <div class="card"><h3>uv</h3><p>The Python tool. It installs Python 3.12 and every package for you.</p><p class="mono" style="font-size:7.5pt;margin-top:1mm">astral.sh/uv</p></div>
+    <div class="card"><h3>Node.js 20+ and pnpm</h3><p>For the dashboard. After installing Node, run <code>corepack enable</code>.</p></div>
+  </div>
+
+  <h2>Option A · one command (Windows)</h2>
+<pre><span class="c"># 1. get the code and install the Python side</span>
+<span class="k">git clone</span> https://github.com/Bikram-Dev-Web/credit-iq.git
+<span class="k">cd</span> credit-iq
+<span class="k">uv sync</span>
+
+<span class="c"># 2. start everything (first run trains the model and builds the web app: ~5 minutes)</span>
+<span class="k">powershell</span> -ExecutionPolicy Bypass -File scripts\run-local.ps1</pre>
+  <p style="font-size:9pt; margin-top:2mm">Two minimized PowerShell windows open: one for the API and one for the dashboard. Close them to stop the app.</p>
+
+  <h2>Option B · step by step (macOS, Linux or Windows)</h2>
+<pre><span class="k">uv sync</span>
+<span class="k">uv run creditiq-train</span> train --config services/trainer/configs/synthetic.yaml \
+    --no-mlflow --file-registry models/registry --alias production
+<span class="c"># terminal 1: the API</span>
+API_KEYS=<span class="s">"analyst:dev-analyst-key-change-me,admin:dev-admin-key-change-me"</span> <span class="k">uv run creditiq-api</span>
+<span class="c"># terminal 2: the dashboard</span>
+<span class="k">cd</span> web &amp;&amp; <span class="k">pnpm install</span> &amp;&amp; cp .env.example .env.local &amp;&amp; <span class="k">pnpm dev</span>
+<span class="c"># optional: fill the decisions log with demo traffic</span>
+<span class="k">uv run python</span> scripts/seed_demo.py --key dev-admin-key-change-me</pre>
+
+  <div class="grid g2" style="margin-top:5mm; gap:6mm">
+    <div>
+      <h3 style="margin-bottom:2mm">Where to open it</h3>
+      <table>
+        <tr><th>Link</th><th>What</th></tr>
+        <tr><td class="mono">localhost:3100</td><td>Dashboard (option A)</td></tr>
+        <tr><td class="mono">localhost:8010/docs</td><td>Interactive API docs</td></tr>
+        <tr><td class="mono">localhost:3000 / 8000</td><td>Same, with option B</td></tr>
+      </table>
+      <p style="font-size:8.4pt; margin-top:2mm">API key for the docs page: <code>dev-analyst-key-change-me</code> (development only).</p>
+    </div>
+    <div>
+      <h3 style="margin-bottom:2mm">Use the real Home Credit model</h3>
+      <ul class="clean">
+        <li>Download <code>application_train.csv</code> from Kaggle (free account) into <code>data/raw/</code>.</li>
+        <li>Train: <code>uv run creditiq-train train --config services/trainer/configs/home_credit.yaml --no-mlflow --file-registry models/registry --alias production</code></li>
+        <li>Restart the API. It needs <b>2–3 minutes</b> to load the bigger model.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>8</span></div>
+</section>
+
+<!-- ============================== 9. DEMO + REPO MAP ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>07 · Five-minute demo</span></div>
+
+  <div class="eyebrow">07 · Presenting</div>
+  <h1>A five-minute live demo</h1>
+  <p class="lead">Start the app at least five minutes before you present, and open each page once so it is warm.</p>
+
+  <div class="steps demo">
+    <div class="step"><div><span class="time">0:00 – 0:45</span><h3>Overview</h3><p>“One model, one policy, every number tagged with where it comes from.” Point at the version chips in the top bar.</p></div></div>
+    <div class="step"><div><span class="time">0:45 – 2:00</span><h3>Score an applicant</h3><p>Press <b>Assess applicant</b>. Explain the PD, the band, the threshold and the reasons. Turn on <b>What-if</b> and lower <code>EXT_SOURCE_2</code> to watch the PD rise until it is flagged.</p></div></div>
+    <div class="step"><div><span class="time">2:00 – 3:00</span><h3>Policy simulator</h3><p>Lower the threshold, press <b>Simulate</b>: more applicants flagged, fewer missed defaults, more review work. That is the trade-off a lender makes.</p></div></div>
+    <div class="step"><div><span class="time">3:00 – 3:45</span><h3>Models</h3><p>Show the model card and calibration. As admin, promote another version and say: “the API switches without downtime.”</p></div></div>
+    <div class="step"><div><span class="time">3:45 – 4:30</span><h3>Monitoring</h3><p>Press <b>Replay shifted demo batch</b>; a warning appears with the inputs that changed.</p></div></div>
+    <div class="step"><div><span class="time">4:30 – 5:00</span><h3>Decisions log</h3><p>Every decision we just made is here, with versions and reasons, and without the applicant’s data.</p></div></div>
+  </div>
+
+  <h2>Questions you will probably get</h2>
+  <div class="grid g2">
+    <div class="mini"><h3>Why not just approve or deny?</h3><p>A model is a tool for a reviewer, not a judge. “Flagged for review” keeps a person accountable.</p></div>
+    <div class="mini"><h3>Is 0.748 good?</h3><p>It is in the usual range for this dataset when only the main application table is used. Adding the bureau and previous-loan tables is the usual way to go higher.</p></div>
+    <div class="mini"><h3>Is it fair?</h3><p>Sensitive attributes are excluded and fairness is measured per group; small groups give noisy numbers, and we say so.</p></div>
+    <div class="mini"><h3>How fast is it?</h3><p>Synthetic model: p95 46 ms at 20 requests/s. The real model: p95 73 ms, still above our 50 ms target.</p></div>
+  </div>
+
+  <div class="foot"><span>CreditIQ v2 · team guide</span><span>9</span></div>
+</section>
+
+<!-- ============================== 10. REFERENCE ============================== -->
+<section class="page">
+  <div class="top"><span class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span>CreditIQ team guide</span><span>08 · Troubleshooting &amp; glossary</span></div>
+
+  <div class="eyebrow">08 · Reference</div>
+  <h1 style="margin-bottom:0">When you get stuck</h1>
+
+  <h2 style="margin-top:2mm">If something goes wrong</h2>
+  <table>
+    <tr><th style="width:36%">Problem</th><th>Fix</th></tr>
+    <tr><td>Dashboard says the API is unreachable</td><td>The API is still loading (up to 3 min for the real model). Check <span class="mono">localhost:8010/healthz</span>.</td></tr>
+    <tr><td>“Port already in use”</td><td>Another app uses the port. Option A uses 8010/3100 for that reason; close the other app or change <code>PORT</code>.</td></tr>
+    <tr><td>Script blocked by Windows</td><td>Keep <code>-ExecutionPolicy Bypass</code> in the command.</td></tr>
+    <tr><td>Dashboard looks outdated after a pull</td><td>Delete <code>web/.next</code> and run the script again to rebuild.</td></tr>
+  </table>
+
+
+  <h2>Glossary</h2>
+  <div class="grid g2" style="gap:3mm">
+    <div class="mini"><h3>PD · probability of default</h3><p>The model’s estimate that an applicant will have the default event.</p></div>
+    <div class="mini"><h3>LGD · loss given default</h3><p>Share of the loan lost if a default happens. Assumed 45%.</p></div>
+    <div class="mini"><h3>EAD · exposure at default</h3><p>How much is owed when the default happens; here, the loan amount.</p></div>
+    <div class="mini"><h3>ROC-AUC</h3><p>How well the model ranks risky above safe applicants: 0.5 is a coin flip, 1.0 is perfect.</p></div>
+    <div class="mini"><h3>Calibration</h3><p>Adjusting scores so a 10% PD really means about 10 in 100 have trouble.</p></div>
+    <div class="mini"><h3>F1 score</h3><p>A balance of catching defaults (recall) and not flagging good applicants (precision). Used to pick the threshold.</p></div>
+    <div class="mini"><h3>PSI · population stability index</h3><p>How much an input’s distribution has moved since training. Above 0.10 is a warning.</p></div>
+    <div class="mini"><h3>Registry alias</h3><p>A label such as <i>production</i> pointing at one model version. Moving it is a promotion.</p></div>
+  </div>
+
+  <h2>Where to read more in the repo</h2>
+  <table>
+    <tr><td class="mono" style="width:38%">README.md</td><td>Overview, results, quick start</td></tr>
+    <tr><td class="mono">docs/MODEL_CARD.md</td><td>What the model is for, its data, metrics and limits</td></tr>
+    <tr><td class="mono">docs/RUNBOOK.md</td><td>Operating it: promote, roll back, handle alerts</td></tr>
+    <tr><td class="mono">docs/adr/</td><td>15 short records of why each technical choice was made</td></tr>
+  </table>
+
+
+  <div class="foot"><span>Educational decision-support prototype, not for real credit decisions.</span><span>10</span></div>
+</section>
+
+</body>
+</html>

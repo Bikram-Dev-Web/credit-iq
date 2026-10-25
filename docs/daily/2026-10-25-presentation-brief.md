@@ -7,7 +7,7 @@ Create a **13-slide** presentation from this brief.
 - **Audience:** our project group and course instructor. They saw the day-1 deck (the plan and the core library).
 - **Tone:** clear and factual. Short bullets (at most 5 per slide, at most about 12 words each).
 - **Style:** dark, modern, minimal (think Linear or Vercel). Near-black background, one indigo/violet accent,
-  sans-serif font (Inter or similar), no serif fonts, no stock photos, no clip art.
+  font IBM Plex Sans (the dashboard's font; IBM Plex Mono for numbers), no serif fonts, no stock photos, no clip art.
 - **Images:** where a slide says *Screenshot*, leave a placeholder box with the file name given; we will paste the
   image from `docs/v2/screenshots/`.
 - **Charts:** where a slide says *Visual*, draw a simple diagram or table. Use only the figures given here.
