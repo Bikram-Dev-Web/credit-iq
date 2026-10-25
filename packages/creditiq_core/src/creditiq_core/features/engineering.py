@@ -40,25 +40,34 @@ class FrameCleaner(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X, columns=self.columns_[: np.shape(X)[1]])
-        missing = [c for c in self.columns_ if c not in X.columns]
+        present = set(X.columns)
+        missing = [c for c in self.columns_ if c not in present]
         self.last_missing_columns_ = missing
-        out: dict[str, np.ndarray] = {}
+        numeric = [c for c in self.numeric_columns_ if c in present]
+        # Numeric block in one conversion (fast for single-row serving); per-column coercion only if the block
+        # contains non-numeric text, which pd.to_numeric(errors="coerce") turns into missing.
+        try:
+            block = X[numeric].to_numpy(dtype=float, na_value=np.nan, copy=True)
+        except (TypeError, ValueError):
+            block = np.column_stack(
+                [pd.to_numeric(X[c], errors="coerce").to_numpy(dtype=float, na_value=np.nan) for c in numeric]
+            ) if numeric else np.empty((len(X), 0))
+        block[~np.isfinite(block)] = np.nan
+        out: dict[str, np.ndarray] = {c: block[:, i] for i, c in enumerate(numeric)}
+        numeric_set = set(self.numeric_columns_)
         for col in self.columns_:
+            if col in out:
+                continue
             if col in missing:
-                out[col] = np.full(len(X), np.nan, dtype=float if col in self.numeric_columns_ else object)
+                out[col] = np.full(len(X), np.nan, dtype=float if col in numeric_set else object)
                 continue
             s = X[col]
-            if col in self.numeric_columns_:
-                v = pd.to_numeric(s, errors="coerce").to_numpy(dtype=float, na_value=np.nan, copy=True)
-                v[~np.isfinite(v)] = np.nan
-                out[col] = v
-            else:
-                arr = s.to_numpy(dtype=object, na_value=np.nan) if hasattr(s, "to_numpy") else np.asarray(s, dtype=object)
-                mask = pd.isna(arr)
-                arr = np.array([str(v) for v in arr], dtype=object)
-                arr[mask] = np.nan
-                out[col] = arr
-        return pd.DataFrame(out, index=X.index)
+            arr = s.to_numpy(dtype=object, na_value=np.nan) if hasattr(s, "to_numpy") else np.asarray(s, dtype=object)
+            mask = pd.isna(arr)
+            arr = np.array([str(v) for v in arr], dtype=object)
+            arr[mask] = np.nan
+            out[col] = arr
+        return pd.DataFrame({c: out[c] for c in self.columns_}, index=X.index)
 
     def get_feature_names_out(self, input_features: Any = None) -> np.ndarray:
         return np.asarray(self.columns_, dtype=object)
