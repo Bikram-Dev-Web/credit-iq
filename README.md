@@ -7,7 +7,7 @@ dashboard on top.**
 > **Educational decision-support prototype, not for real credit decisions.** Outcomes are *within threshold* or
 > *flagged for review*, never approval or denial. The bundled data is synthetic.
 
-**Live demo:** *not deployed yet* — see [docs/DEPLOY.md](docs/DEPLOY.md) (Render + Neon + Vercel, free tiers).
+**Runs locally** — no public deployment for this project. One command on Windows: `powershell -ExecutionPolicy Bypass -File scriptsun-local.ps1`, then open <http://localhost:3100>. (A free-tier deployment guide is in [docs/DEPLOY.md](docs/DEPLOY.md) if ever needed.)
 
 | Dark | Light |
 |---|---|
@@ -73,7 +73,9 @@ and seeds demo traffic (allow 5–10 minutes the first time). Then:
 
 Defaults are development-only; set your own in `.env` (see [`.env.example`](.env.example)).
 
-**Without Docker (uv + pnpm):**
+**Without Docker, one command (Windows):** `powershell -ExecutionPolicy Bypass -File scriptsun-local.ps1` → dashboard <http://localhost:3100>, API docs <http://localhost:8010/docs>.
+
+**Without Docker, step by step (uv + pnpm):**
 
 ```bash
 uv sync
@@ -209,7 +211,7 @@ Vercel.
 - Explanations show association, not causation; fairness checks cover only the attributes available and are not
   legal advice.
 - Random splits do not test performance on future cohorts.
-- The hosted demo runs on free tiers: it sleeps when idle, and MLflow, Prometheus and Grafana run only locally.
+- There is no public deployment; the project is run locally.
 - Rate limits are per process (no Redis); scale-out would need a shared limiter.
 
 ## Legacy v1
