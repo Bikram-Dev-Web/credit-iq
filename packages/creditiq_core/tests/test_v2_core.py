@@ -162,3 +162,14 @@ def test_explain_one_matches_the_general_path(experiment, key):
         assert meta["exact"] == ref_meta["exact"] and meta["units"] == ref_meta["units"]
         if meta["base_value"] is not None:
             assert meta["base_value"] == pytest.approx(ref_meta["base_value"])
+
+
+def test_psi_is_stable_across_float32_and_float64_reads():
+    """Regression (found on Home Credit): discrete values on a cut point flipped bins between a float32 training
+    frame and a float64 monitoring batch, giving PSI > 1 for an unchanged population."""
+    rng = np.random.default_rng(0)
+    values = rng.choice([0.0417, 0.0833, 0.1667, 0.3333, 0.6667, np.nan], size=5000, p=[.1, .2, .4, .15, .05, .1])
+    ref = mon.build_reference(pd.DataFrame({"x": values.astype(np.float32)}))
+    batch = pd.DataFrame({"x": rng.permutation(values).astype(np.float64)})
+    psi = mon.feature_drift(ref, batch).set_index("column").loc["x", "psi"]
+    assert psi < 0.01

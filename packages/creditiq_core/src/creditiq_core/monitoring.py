@@ -50,7 +50,9 @@ def _numeric_edges(values: pd.Series, n_bins: int) -> list[float]:
 def _numeric_props(values: pd.Series, cuts: list[float]) -> np.ndarray:
     v = pd.to_numeric(values, errors="coerce").replace([np.inf, -np.inf], np.nan)
     missing = v.isna().to_numpy()
-    bins = np.searchsorted(np.asarray(cuts), v[~missing].to_numpy(), side="right")
+    # Compare at float32 precision: training data may have been down-cast to float32 while a monitoring batch is
+    # float64, and values that sit exactly on a cut point (common for discrete measures) would otherwise flip bins.
+    bins = np.searchsorted(np.asarray(cuts, dtype=np.float32), v[~missing].to_numpy(dtype=np.float32), side="right")
     counts = np.bincount(bins, minlength=len(cuts) + 1).astype(float)
     counts = np.append(counts, missing.sum())
     total = counts.sum()
