@@ -5,7 +5,7 @@ RUN corepack enable && corepack prepare pnpm@12.15.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone
 RUN pnpm build
 
 FROM node:22-alpine AS run
