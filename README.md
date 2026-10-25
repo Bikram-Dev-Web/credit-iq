@@ -126,13 +126,27 @@ uv run python scripts/seed_demo.py --key dev-admin-key-change-me                
 **Fabricated data; these numbers say nothing about real borrowers.** Test default rate 7.7% (PR-AUC's random
 baseline). The same seed reproduces v1's published figures exactly (`scripts/check_v1_equivalence.py`).
 
-### Real data: Home Credit
+### Real data: Home Credit Default Risk
 
-**Not reported yet.** The data is free (Kaggle account) but has not been downloaded for this project. Steps:
-download `application_train.csv` from <https://www.kaggle.com/competitions/home-credit-default-risk/data> into
-`data/raw/`, then `uv run creditiq-train train --config services/trainer/configs/home_credit.yaml`. Results will be
-listed here separately from the synthetic ones. Note that Home Credit's `TARGET` is an early payment difficulty,
-not a 12-month default.
+`services/trainer/configs/home_credit.yaml` on Kaggle's `application_train.csv` (307,511 applications, 122
+columns): 150,000 rows streamed at random (seed 42), 60,000 labelled rows trained, stratified 60/20/20, 115
+predictors (identifiers excluded; `CODE_GENDER`, `DAYS_BIRTH`, `NAME_FAMILY_STATUS` kept out of the model for the
+fairness audit), Platt calibration and max-F1 threshold on validation:
+
+| Model | Validation ROC-AUC | Test ROC-AUC | Test PR-AUC | Test Brier | Test KS | Threshold |
+|---|---|---|---|---|---|---|
+| Gradient Boosting (LightGBM) (selected on validation) | 0.751 | **0.748** | 0.226 | 0.0688 | 0.378 | 12.3% |
+| Logistic Regression | 0.749 | 0.739 | 0.210 | 0.0694 | 0.366 | 11.9% |
+| Random Forest | 0.740 | 0.729 | 0.202 | 0.0698 | 0.355 | 14.3% |
+
+Test default rate 8.1% (PR-AUC's random baseline). This model is registered as **v3** and serves as production
+locally. Home Credit's `TARGET` is a payment difficulty on an early instalment, not a 12-month default. Only the
+main application table is used (the bureau and previous-application tables can be added with
+`creditiq-train build-features home-credit`). Real data is git-ignored and never committed.
+
+Drift monitoring on real rows: a random sample of the same population gives max PSI 0.005 (no alert); a batch with
+a deliberate shift (45% of `EXT_SOURCE_3` missing, incomes −20%, more cash loans) raises *feature shift* and
+*missingness jump* alerts.
 
 ### Performance
 
@@ -145,7 +159,7 @@ caveats in [`loadtest/RESULTS.md`](loadtest/RESULTS.md):
 | `/v1/decide` | 20 req/s for 60 s | 20.1 | 25.2 ms | 54.9 ms | 265.6 ms |
 | `/v1/score` | 8 VUs back-to-back | 27.7 | 279.2 ms | 391.7 ms | 532.5 ms |
 
-Target p95 < 50 ms for single-applicant scoring: **met**. Capacity of one worker is about 28 req/s; beyond that,
+Target p95 < 50 ms for single-applicant scoring: **met for the 21-input synthetic model**. The 115-input Home Credit LightGBM model is slower on the same laptop (`/v1/score` p50 57 ms, p95 73 ms, sequential requests), and does not meet the target yet. Capacity of one worker is about 28 req/s; beyond that,
 requests queue.
 
 ## Testing and CI
@@ -189,7 +203,7 @@ Vercel.
 
 ## Limitations
 
-- All published model results are on **synthetic** data; real-data results await the Home Credit download.
+- Real-data results use one table of one public dataset with a random split; they are not evidence that the model would work for another lender, product or period.
 - The PD is the probability of the dataset's own event; treating it as a 12-month PD is an assumption. LGD, EAD,
   rates and costs are assumptions. This is not an IFRS 9 or regulatory capital model.
 - Explanations show association, not causation; fairness checks cover only the attributes available and are not

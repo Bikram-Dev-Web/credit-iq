@@ -41,7 +41,7 @@ the Models page and at `GET /v1/models/{version}/card`.
 | Dataset | Status | Notes |
 |---|---|---|
 | Bundled synthetic sample (`data/sample_credit_data.csv`) | used for every registered demo version | 20,000 fabricated applications with Home Credit–style columns; target rate about 8% |
-| Home Credit Default Risk (`application_train.csv`) | config provided; **not yet run** | free Kaggle download; `TARGET = 1` is an early payment difficulty, not a 12-month default |
+| Home Credit Default Risk (`application_train.csv`) | trained 2026-10-25 → registry v3 (LightGBM, test ROC-AUC 0.748) | free Kaggle download; `TARGET = 1` is an early payment difficulty, not a 12-month default |
 
 The target mapping is always explicit (the config must list the default labels). Identifiers, post-outcome fields
 (the leakage guard on training rows), raw dates and sensitive attributes are excluded from the inputs.
@@ -64,6 +64,18 @@ Seed 42, stratified 60/20/20 split, `services/trainer/configs/synthetic.yaml`:
 
 Test default rate 7.7% (PR-AUC's random baseline). **These figures describe fabricated data.** Calibration (Platt
 scaling) and the decision threshold (maximise F1) were fitted on validation only; the test split was used once.
+
+## Evaluation (Home Credit, real data)
+
+`services/trainer/configs/home_credit.yaml`: 150,000 rows sampled, 60,000 labelled rows, stratified split, seed 42.
+
+| Model | Validation ROC-AUC | Test ROC-AUC | Test PR-AUC | Test Brier | Test KS |
+|---|---|---|---|---|---|
+| Gradient Boosting (LightGBM) (selected) | 0.751 | 0.748 | 0.226 | 0.0688 | 0.378 |
+| Logistic Regression | 0.749 | 0.739 | 0.210 | 0.0694 | 0.366 |
+| Random Forest | 0.740 | 0.729 | 0.202 | 0.0698 | 0.355 |
+
+Test default rate 8.1%. Single application table only; random split (no dates exist for a time split).
 
 ## Ethical considerations and limitations
 
