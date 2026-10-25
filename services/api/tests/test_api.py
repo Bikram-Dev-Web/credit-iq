@@ -389,3 +389,12 @@ def test_hosted_postgres_urls_get_the_psycopg_driver() -> None:
     s = Settings(_env_file=None, database_url="postgres://u:p@host/db?sslmode=require")  # type: ignore[call-arg]
     assert s.database_url == "postgresql+psycopg://u:p@host/db?sslmode=require"
     assert Settings(_env_file=None, database_url="sqlite:///x.db").database_url == "sqlite:///x.db"  # type: ignore[call-arg]
+
+
+def test_replay_demo_picks_a_batch_matching_the_model(client: TestClient, app_factory) -> None:
+    r = client.post("/v1/monitoring/replay-demo", headers=A)
+    assert r.status_code == 200, r.text
+    run = r.json()["result"]
+    assert run["batch_name"] == "sample_monitoring_batch.csv" and run["source"] == "replay" and run["alerts"]
+    none = app_factory(demo_batches="does/not/exist.csv")
+    assert none.post("/v1/monitoring/replay-demo", headers=A).status_code == 404

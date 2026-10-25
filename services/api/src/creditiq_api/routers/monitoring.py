@@ -1,8 +1,10 @@
 """Drift monitoring: latest run, history, alerts and on-demand checks."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
+import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import select
 
@@ -86,3 +88,22 @@ async def check(request: Request, file: UploadFile, _: Principal = Depends(analy
     result = drift.run_check(model, frame, file.filename or "upload.csv", "api", db)
     return _out(result, model)
 
+
+
+@router.post("/replay-demo", response_model=ResultOut, summary="Run a drift check on the demo batch for the served model")
+def replay_demo(request: Request, _: Principal = Depends(analyst), model: LoadedModel = Depends(deps.model),
+                db: Database = Depends(deps.db)) -> dict[str, Any]:
+    """Uses the first configured demo batch (`DEMO_BATCHES`) whose columns cover the served model's inputs, so the
+    demo works for the synthetic model and for a model trained on real data alike."""
+    needed = set(model.input_columns)
+    for raw in request.app.state.settings.demo_batches.split(","):
+        path = Path(raw.strip())
+        if not path.is_file():
+            continue
+        header = set(pd.read_csv(path, nrows=0).columns)
+        if needed <= header:
+            frame, _info = read_csv_file(path.read_bytes(), name=path.name, optimize_memory=False)
+            return _out(drift.run_check(model, frame, path.name, "replay", db), model)
+    raise HTTPException(status.HTTP_404_NOT_FOUND,
+                        "No demo batch matches the served model's inputs. Upload a CSV with 'Check a CSV batch', or "
+                        "list a matching file in DEMO_BATCHES.")

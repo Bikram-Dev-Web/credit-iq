@@ -92,8 +92,14 @@ export default function MonitoringPage() {
   const replayDemo = async () => {
     setBusy(true);
     try {
-      const csv = await (await fetch("/demo/sample_monitoring_batch.csv")).blob();
-      await upload(new File([csv], "sample_monitoring_batch.csv", { type: "text/csv" }));
+      // the API picks the demo batch that matches the served model (synthetic or real data)
+      const res = await fetch("/api/proxy/v1/monitoring/replay-demo", { method: "POST" });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error?.message ?? `Replay failed (${res.status})`);
+      toast.success(`Drift check complete: ${body.result.status} (${body.result.alerts.length} alert(s))`);
+      await qc.invalidateQueries();
+    } catch (e) {
+      toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }

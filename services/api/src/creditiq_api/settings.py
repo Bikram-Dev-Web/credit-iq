@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     grafana_url: str | None = None
     mlflow_ui_url: str | None = None
+    demo_batches: str = Field(
+        default="data/sample_monitoring_batch.csv,data/raw/home_credit_shifted_batch.csv",
+        description="Comma-separated CSVs for the 'replay demo batch' drift check; the first one whose columns cover "
+                    "the served model's inputs is used")
 
     @field_validator("database_url")
     @classmethod
