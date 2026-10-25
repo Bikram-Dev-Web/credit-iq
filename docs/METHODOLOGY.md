@@ -1,6 +1,11 @@
 # Methodology
 
-This document describes exactly what the code does. File references point to `src/`.
+This document describes exactly what the code does. File references use the v1 module names; in v2 the same code
+lives in `packages/creditiq_core` (for example `data_validation.py` → `creditiq_core.data.validation`,
+`modeling.py` → `creditiq_core.models.training`, `decision_engine.py` → `creditiq_core.finance.cost_matrix`; the full
+mapping is in [`v2/MIGRATION_PLAN.md`](v2/MIGRATION_PLAN.md) §3). v2 adds a separate, versioned lending policy
+(`creditiq_core.policy`, [ADR 1](adr/0001-policy-separate-from-model.md)) and a single-row serving path
+(`explain_one`, [ADR 15](adr/0015-single-row-fast-path.md)); the statistics below are unchanged.
 
 ## 1. Data handling (`data_loader.py`, `data_validation.py`)
 

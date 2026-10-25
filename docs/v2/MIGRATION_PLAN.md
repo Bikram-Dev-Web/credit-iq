@@ -1,6 +1,6 @@
 # CreditIQ v2 — Migration plan
 
-Status: **Approved 2026-10-24.** Phase 1 in progress.
+Status: **Approved 2026-10-24. All phases implemented (2026-10-25).** What remains needs the owner's accounts: pushing to GitHub and the public deployment ([DEPLOY.md](../DEPLOY.md)), and the optional Home Credit download.
 
 This plan maps every part of the v1 Streamlit prototype to its place in the v2 platform (scoring service → policy
 engine → audit store → web dashboard). It lists what is reused, refactored and dropped, and records where the plan

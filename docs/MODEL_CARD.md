@@ -1,78 +1,93 @@
-# Model card — CreditIQ probability-of-default models
+# Model card: CreditIQ probability-of-default models (v2)
 
-This is the standing model card for the CreditIQ modelling approach. An **experiment-specific card**, filled with the
-actual dataset, settings and held-out metrics of the model you trained, is generated in
-**Reports & Documentation → Model card** and can be downloaded as Markdown. No performance figures are stated here,
-because they depend entirely on the data you train on.
+This is the standing model card for the CreditIQ modelling approach. Every registered model version also gets a
+**version-specific card** generated from its real training metadata (dataset, target mapping, split, parameters,
+calibration, threshold and held-out metrics). It is stored in the version's package, logged to MLflow, and shown on
+the Models page and at `GET /v1/models/{version}/card`.
+
+> Educational decision-support prototype, not for real credit decisions.
 
 ## Model details
 
-- **Developed for**: a university Financial Management course and an AI/finance portfolio project.
-- **Model types**: logistic regression (interpretable baseline), random forest, and gradient boosting (LightGBM if
-  installed; otherwise XGBoost; otherwise scikit-learn HistGradientBoosting). Each is one scikit-learn pipeline plus a
-  probability calibrator.
-- **Output**: a raw model score and a calibrated probability that the dataset's defined default event occurs; a risk
-  band; an illustrative expected loss given LGD and EAD assumptions.
-- **Version**: CreditIQ 1.0.0. Experiment IDs identify individual trained models.
+- **Developed for:** a university project on credit risk and lending economics.
+- **Model families:** logistic regression (interpretable baseline), random forest, and gradient boosting with a
+  named backend (LightGBM by default). Each is one scikit-learn pipeline (schema enforcement → credit-ratio features
+  → imputation with missing indicators, one-hot encoding with rare-level grouping, scaling for the linear model →
+  estimator) plus a probability calibrator.
+- **Selection:** all configured families are trained in one MLflow run; the one with the best **validation**
+  ROC-AUC is registered as `creditiq-pd`.
+- **Outputs:** a raw model score, a calibrated probability of the dataset's defined default event, a risk band, the
+  top reasons (exact signed contributions for logistic regression and LightGBM, in log-odds), and, with the active
+  lending policy, an outcome of *within threshold* or *flagged for review* (never approve or deny).
+- **Versioning:** MLflow registry aliases `staging`, `production` and `previous`. Every version records the config
+  hash, dataset fingerprint, git SHA, seed and a synthetic-data flag.
 
 ## Intended use
 
-- Learning how credit-risk models are built, validated, explained and connected to expected loss, pricing and
-  lending-policy economics.
-- Exploring trade-offs between missed defaults, rejected good applicants, review workload and contribution.
-- Demonstrating responsible-AI practices: leakage control, calibration, fairness checks, monitoring and documentation.
+- Learning and demonstrating how credit-risk models are built, validated, served, monitored and connected to
+  expected loss, pricing and lending policy.
+- Exploring trade-offs between missed defaults, flagged good applicants, review workload and contribution.
 
 ## Out-of-scope use
 
-- Approving, declining, pricing or limiting credit for real people. Outcomes are labelled "within the selected
-  threshold" or "flagged for review" — never approval or denial.
+- Approving, declining, pricing or limiting credit for real people.
 - Regulatory capital, IFRS 9 or CECL provisioning, or any compliance decision.
 - Applying a model to a population, product, country or period different from its training data without
   re-validation.
-- Any use of the synthetic demonstration results as evidence about real borrowers.
+- Treating results on the bundled synthetic data as evidence about real borrowers.
 
 ## Training data
 
-Whatever dataset the user loads; the experiment card records its name, fingerprint, size, synthetic flag, target
-definition and exclusions. The documented sources (Home Credit, UCI German Credit, LendingClub) and the bundled
-synthetic sample are described in `DATA_SOURCES.md`.
+| Dataset | Status | Notes |
+|---|---|---|
+| Bundled synthetic sample (`data/sample_credit_data.csv`) | used for every registered demo version | 20,000 fabricated applications with Home Credit–style columns; target rate about 8% |
+| Home Credit Default Risk (`application_train.csv`) | config provided; **not yet run** | free Kaggle download; `TARGET = 1` is an early payment difficulty, not a 12-month default |
+
+The target mapping is always explicit (the config must list the default labels). Identifiers, post-outcome fields
+(the leakage guard on training rows), raw dates and sensitive attributes are excluded from the inputs.
 
 ## Factors and sensitive attributes
 
-Potentially protected attributes (e.g. gender, age/date of birth, marital status, nationality, foreign-worker status)
-are excluded from model inputs by default and kept for a separate group-level audit. Remaining inputs may act as
-proxies; the app measures this association. Re-including a sensitive attribute requires an explicit justification.
+Gender, age (date of birth) and family status are never model inputs. They are kept only in the held-out evaluation
+snapshot for the group-level fairness audit, and lending-policy rules may not reference them (enforced on load).
+Remaining inputs may act as proxies; the proxy scan measures that association.
 
-## Evaluation
+## Evaluation (synthetic data)
 
-- Held-out test split, never used for fitting, calibration, tuning, model selection or threshold choice.
-- Discrimination: ROC-AUC, Gini, PR-AUC, KS, lift, decile tables.
-- Calibration: reliability curve with confidence intervals, expected calibration error, Brier score, log loss.
-- Decisions: confusion matrix, precision, recall, specificity, F1, balanced accuracy at the chosen threshold.
-- Stability: metrics by quarter when real dates exist; chronological split option.
-- Fairness: per-group flag rates (share above the review threshold), error rates, calibration and AUC.
+Seed 42, stratified 60/20/20 split, `services/trainer/configs/synthetic.yaml`:
+
+| Model | Validation ROC-AUC | Test ROC-AUC | Test PR-AUC | Test Brier | Test KS |
+|---|---|---|---|---|---|
+| Logistic Regression (selected) | 0.798 | 0.813 | 0.290 | 0.0622 | 0.481 |
+| Random Forest | 0.792 | 0.815 | 0.296 | 0.0623 | 0.491 |
+| Gradient Boosting (LightGBM) | 0.785 | 0.807 | 0.290 | 0.0625 | 0.493 |
+
+Test default rate 7.7% (PR-AUC's random baseline). **These figures describe fabricated data.** Calibration (Platt
+scaling) and the decision threshold (maximise F1) were fitted on validation only; the test split was used once.
 
 ## Ethical considerations and limitations
 
-- Historical labels reflect past lending decisions and data collection, not only borrower behaviour.
-- The Home Credit target is a payment-difficulty event on early instalments, not a full-term default.
-- Explanations show learned associations, not causes; correlated inputs make attributions unstable.
-- Small groups give noisy fairness estimates; meeting one fairness criterion can violate another.
-- Expected-loss and contribution figures inherit the uncertainty of the LGD, EAD, rate and cost assumptions.
+- Historical labels reflect past lending and data collection, not only borrower behaviour.
+- The PD is the probability of the dataset's own event; treating it as a 12-month PD is an assumption.
+- Explanations show learned association, not causation; correlated inputs make attributions unstable.
+- Small groups give noisy fairness estimates, and fairness criteria can conflict when base rates differ.
+- Expected loss and contribution inherit the uncertainty of the LGD, EAD, rate and cost assumptions.
+- Random splits do not test performance on future cohorts (Home Credit has no dates for a time split).
 
 ## Governance requirements before any real use
 
-1. Independent model validation, including out-of-time testing and benchmarking against simpler models.
-2. Legal review of every input and of the reasons given to applicants.
-3. Documented human review of flagged applications, with an override and appeal process.
-4. Monitoring of input drift, score drift, calibration and group outcomes, with thresholds that trigger review.
-5. Change control: every retraining logged with data lineage, configuration and sign-off.
+| Requirement | What v2 provides | What would still be needed |
+|---|---|---|
+| Independent validation | held-out test metrics, calibration, model card per version | out-of-time testing and benchmarking by an independent team |
+| Change control | MLflow lineage, immutable registry versions, admin-only promotion recorded in `admin_events` | formal sign-off |
+| Monitoring | scheduled PSI, missingness, PD drift and labelled-performance checks with alerts | agreed escalation owners |
+| Human review | outcomes are *flagged for review*, never automatic denials; rules record their reasons | a documented review, override and appeal process |
+| Privacy | audit log with an HMAC of inputs only; no request bodies in logs | a retention policy for the evaluation snapshot of private data |
 
 ## References
 
-- Mitchell, M. et al. (2019). *Model Cards for Model Reporting.* Proceedings of FAT* 2019.
-- Platt, J. (1999). *Probabilistic outputs for support vector machines and comparisons to regularized likelihood methods.*
-- Zadrozny, B. & Elkan, C. (2002). *Transforming classifier scores into accurate multiclass probability estimates.* KDD.
-- Lundberg, S. & Lee, S.-I. (2017). *A Unified Approach to Interpreting Model Predictions.* NeurIPS.
-- Kleinberg, J., Mullainathan, S. & Raghavan, M. (2016). *Inherent Trade-Offs in the Fair Determination of Risk Scores.*
-- Chouldechova, A. (2017). *Fair prediction with disparate impact.* Big Data, 5(2).
+- Mitchell, M. et al. (2019). *Model Cards for Model Reporting.* FAT* 2019.
+- Platt, J. (1999). *Probabilistic outputs for support vector machines.*
+- Lundberg, S. and Lee, S.-I. (2017). *A Unified Approach to Interpreting Model Predictions.* NeurIPS.
+- Kleinberg, J., Mullainathan, S. and Raghavan, M. (2016). *Inherent Trade-Offs in the Fair Determination of Risk
+  Scores.*

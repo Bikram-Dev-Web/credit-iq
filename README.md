@@ -1,134 +1,121 @@
-# CreditIQ v2
+# CreditIQ
 
-A credit-decisioning platform built from the CreditIQ prototype: probability-of-default (PD) models served by an
-API, a policy engine kept separate from the model, a privacy-preserving audit log and a web dashboard.
+**A credit-decisioning platform: calibrated probability-of-default models, served by an API, governed by a
+versioned lending policy, audited without storing applicant data, and monitored for drift — with a modern
+dashboard on top.**
 
-> **Educational decision-support prototype, not for real credit decisions.** Outcomes are reported as "within
-> threshold" or "flagged for review", never as approval or denial.
+> **Educational decision-support prototype, not for real credit decisions.** Outcomes are *within threshold* or
+> *flagged for review*, never approval or denial. The bundled data is synthetic.
 
-**Status: under construction.** This README grows one section per phase. See
-[`docs/v2/MIGRATION_PLAN.md`](docs/v2/MIGRATION_PLAN.md) for the full plan.
+**Live demo:** *not deployed yet* — see [docs/DEPLOY.md](docs/DEPLOY.md) (Render + Neon + Vercel, free tiers).
 
-| Phase | Scope | Status |
-|---|---|---|
-| 0 | Migration plan | Done |
-| 1 | `creditiq_core` library, ported tests, ruff, mypy | Done |
-| 2 | Trainer CLI + MLflow registry | Done |
-| 3 | FastAPI scoring/decision API, policy engine, Postgres audit log | — |
-| 4 | Next.js dashboard | — |
-| 5 | Monitoring job, Grafana, load tests | — |
-| 6 | CI/CD and deployment | — |
-| 7 | Documentation and polish | — |
-
----
-
-## Repository layout
-
-```
-creditiq-v2/
-├── packages/creditiq_core/   # pure-Python library: no Streamlit, no web framework, no I/O
-├── services/trainer/         # creditiq-train: YAML configs → MLflow runs → registered model versions
-├── data/                     # synthetic sample + shifted monitoring batch; raw/ is git-ignored
-├── docs/                     # methodology, data sources, model card, v2 plan, daily briefs
-└── legacy/                   # the v1 Streamlit app, unchanged and still runnable
-```
-
-## Quick start (development)
-
-Requires [uv](https://docs.astral.sh/uv/) and Python 3.11+ (uv installs Python 3.12 if needed).
-
-```bash
-uv sync                    # creates .venv with every workspace package and the dev tools
-uv run pytest              # core + trainer tests
-uv run ruff check .        # lint
-uv run mypy                # type check (strict on creditiq_core)
-```
-
-The v1 Streamlit app still runs from `legacy/`; see [`legacy/README.md`](legacy/README.md).
-
----
-
-## Phase 1: the core library
-
-`packages/creditiq_core` holds all modelling and finance logic from v1, moved out of the Streamlit app and given
-type hints. The algorithms are unchanged, and the v1 tests that cover them pass in their new home.
-
-| Module | Contents |
+| Dark | Light |
 |---|---|
-| `data.validation` | profiling, quality issues, explicit target mapping, feature roles, leakage screen |
-| `data.csv`, `data.synthetic` | CSV parsing from bytes or file objects, dataset provenance, the seeded synthetic generator |
-| `features` | schema enforcement, credit-ratio features, imputation and encoding, train/validation/test splits |
-| `models` | the three model families, `CreditModel`, training runs, `ModelArtifact`, `EvaluationSnapshot` |
-| `calibration`, `evaluation`, `explainability` | Platt/isotonic calibration, metrics and curves, contributions and SHAP |
-| `finance` | expected loss, contribution, break-even, stress tests and NPV; cost matrix; portfolio analytics |
-| `fairness`, `monitoring` | group metrics, disparities and proxy scan; PSI, schema checks and structured drift alerts |
-| `provenance`, `formatting`, `jsonsafe`, `defaults` | shared vocabulary and helpers |
-
-What changed from v1:
-
-- **No I/O in the core.** Paths, `.env` handling and SQLite moved out. The trainer reads files from disk
-  (`creditiq_trainer.io`), and the core parses what it is given.
-- **A model artifact without data rows.** `ModelArtifact` holds the pipeline, calibrator, input schema, the
-  validation-chosen threshold and the monitoring reference. The validation and test predictions that v1 stored in
-  its bundle now live in a separate `EvaluationSnapshot`, which never contains training rows or identifiers.
-- **Explicit boosting backend.** `TrainingConfig.gbm_backend` names `lightgbm`, `xgboost` or `sklearn_hgb`. A named
-  backend that is not installed is an error. `auto` keeps v1's first-installed behaviour.
-- **Configurable drift alerts.** PSI and missingness thresholds are parameters, and alerts are also available as
-  structured records for the monitoring service.
-
-Methodological guarantees carried over from v1 and still enforced by tests: train/validation/test separation;
-calibration and threshold on validation only; the leakage guard on training rows only; explicit target mapping;
-sensitive attributes kept out of the model inputs.
-
-### Tests
-
-| Suite | Where | Cases |
-|---|---|---|
-| Core | `packages/creditiq_core/tests` | 115: 98 ported from v1 + 17 new |
-| Trainer | `services/trainer/tests` | 16: 2 ported from v1 + 14 new |
-| Legacy (v1 app) | `legacy/tests` | the original 124, unchanged |
-
-The new core tests include v1's five currency-formatting cases, rewritten against the pure `formatting.money()`
-(v1 needed Streamlit session state for them). The other v1 tests that were not ported cover code v2 replaces: the
-10 Streamlit UI tests, the SQLite audit log, the HTML project report and the v1 CLI. Their behaviour is re-tested
-against the trainer (Phase 2), the API (Phase 3) and the web app (Phase 4).
-
-**Equivalence with v1.** On the same synthetic data and seed, v1's `run_experiment` and v2's select the same
-model with the same thresholds and identical test metrics. Predicted PDs differ by at most 8 × 10⁻¹⁶ (floating-point
-rounding), and local explanations and loan NPV are identical.
+| ![Overview, dark theme](docs/v2/screenshots/overview-dark.png) | ![Overview, light theme](docs/v2/screenshots/overview-light.png) |
+| ![Scoring an applicant](docs/v2/screenshots/score-dark.png) | ![Policy simulator](docs/v2/screenshots/policies-light.png) |
 
 ---
 
-## Phase 2: trainer and model registry
+## Architecture
 
-`creditiq-train` trains from a YAML config, logs everything to MLflow and registers the selected model.
-
-```bash
-uv run creditiq-train train --config services/trainer/configs/synthetic.yaml   # → creditiq-pd v1 @staging
-uv run creditiq-train promote --version 1                                       # staging → production
-uv run creditiq-train versions                                                  # versions and aliases
-uv run creditiq-train rollback                                                  # production ← previous
-uv run creditiq-train export --ref all --out models/registry                    # file registry for the API
-uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db                 # browse runs at :5000
+```mermaid
+flowchart LR
+  WEB["Web dashboard<br/>Next.js · server-side proxy"] -->|HTTPS| API
+  subgraph API["Scoring API · FastAPI"]
+    direction TB
+    AUTH["API keys · roles · rate limit"] --> SCORE["/v1/score · /score/batch · /decide"]
+    SCORE --> HOLDER["ModelHolder<br/>hot reload"]
+    SCORE --> POLICY["Policy engine<br/>versioned YAML"]
+  end
+  CORE[["creditiq_core<br/>features · models · calibration · finance<br/>fairness · monitoring · policy"]]
+  TRAIN["Trainer<br/>creditiq-train"] -->|log, register| MLF[("MLflow registry<br/>staging · production · previous")]
+  MLF -->|load @production| HOLDER
+  API -->|audit log · policies| PG[("Postgres")]
+  MON["Monitor job<br/>PSI · alerts"] --> PG
+  PROM["Prometheus"] -->|/metrics| API
+  PROM --> GRAF["Grafana"]
+  API -.-> CORE
+  TRAIN -.-> CORE
+  MON -.-> CORE
 ```
 
-- **Config** (`services/trainer/configs/*.yaml`): dataset, an explicit target mapping (required, never assumed),
-  excluded and sensitive columns, split, models, boosting backend, calibration, threshold rule, selection metric,
-  leakage guard, seed and registry alias. Unknown keys and invalid combinations are rejected with a readable error.
-- **Logged per run:** params, per-split metrics for every model (ROC-AUC, PR-AUC, Brier, KS, log loss and the
-  threshold metrics), calibration/ROC/PR plots, the model card, the data-quality report and lineage tags (config
-  hash, dataset fingerprint, git SHA, synthetic flag, seed).
-- **Registry:** model `creditiq-pd` with aliases `staging` (new candidate), `production` (served) and `previous`
-  (set on promotion, so rollback is one alias move). MLflow stages are deprecated, so aliases are used instead.
-- **What a version contains** (`creditiq_core.models.package`): the pipeline, calibrator, input schema, threshold
-  and monitoring reference (`model_artifact.joblib`, no data rows); a separate evaluation snapshot of the validation
-  and test rows (never training rows or identifiers); curves and metrics; the model card. The MLflow signature
-  records column names and types only; no input example is stored, because that would copy applicant rows.
-- **Reproducible:** the same config and seed give identical models, thresholds and metrics (tested).
+| Component | What it does |
+|---|---|
+| [`packages/creditiq_core`](packages/creditiq_core) | Pure Python library (no I/O, no web framework): data validation and explicit target mapping, leakage guard, features, three model families, calibration, evaluation, explanations, expected loss and lending economics, portfolio analytics, fairness, drift, and the lending-policy engine. Strictly typed. |
+| [`services/trainer`](services/trainer) | `creditiq-train`: YAML configs → MLflow runs (metrics, plots, model card) → registered versions with `staging` / `production` / `previous` aliases; promote, roll back, export. |
+| [`services/api`](services/api) | FastAPI: scoring, batch scoring (streamed), decisions, models, portfolio, scenarios, policies, fairness, monitoring, audit log; API keys, rate limits, Prometheus metrics, JSON logs, Alembic migrations. |
+| [`services/monitor`](services/monitor) | Scheduled drift job: PSI per input, PD drift, missingness, schema checks, labelled performance; live PD drift from the audit log; alerts to Postgres, Prometheus and an optional webhook. |
+| [`web`](web) | Next.js (App Router, TypeScript), Tailwind, Radix, TanStack Query and Table, Recharts, Zod; API types generated from OpenAPI. |
+| [`infra`](infra) | Docker Compose stack, Prometheus rules, provisioned Grafana dashboard, demo deployment image. |
+| [`policies`](policies) | Versioned lending policies (YAML). |
+| [`legacy`](legacy) | The v1 Streamlit prototype, unchanged and still runnable. |
 
-### Results on the bundled synthetic data
+Design decisions are recorded as [ADRs](docs/adr/README.md).
 
-`creditiq-train train --config services/trainer/configs/synthetic.yaml` (seed 42, stratified 60/20/20):
+## Quick start
+
+**Everything (Docker):**
+
+```bash
+docker compose up --build
+```
+
+The first start builds the images, trains the synthetic model, registers it in MLflow, promotes it to production
+and seeds demo traffic (allow 5–10 minutes the first time). Then:
+
+| URL | What |
+|---|---|
+| <http://localhost:3000> | dashboard (dev keys: analyst by default; switch to admin in the top bar) |
+| <http://localhost:8000/docs> | API docs (`X-API-Key: dev-analyst-key-change-me`) |
+| <http://localhost:5000> | MLflow |
+| <http://localhost:3001> | Grafana (*CreditIQ — API, decisions and drift*) |
+| <http://localhost:9090> | Prometheus |
+
+Defaults are development-only; set your own in `.env` (see [`.env.example`](.env.example)).
+
+**Without Docker (uv + pnpm):**
+
+```bash
+uv sync
+uv run creditiq-train train --config services/trainer/configs/synthetic.yaml --no-mlflow \
+    --file-registry models/registry --alias production
+API_KEYS="analyst:dev-analyst-key-change-me,admin:dev-admin-key-change-me" uv run creditiq-api   # :8000
+
+cd web && pnpm install && cp .env.example .env.local && pnpm dev                              # :3000
+uv run python scripts/seed_demo.py --key dev-admin-key-change-me                               # optional demo traffic
+```
+
+## What you can do
+
+- **Score an applicant** with a form generated from the model's schema (most influential inputs first): PD gauge,
+  risk band, expected loss, a waterfall of the reasons, uncertainty (held-out reliability of the band), caveats,
+  and a *what-if* mode that re-scores live as you drag inputs.
+- **Simulate a lending policy**: edit thresholds, rules and the cost matrix in a form or as YAML, compare flag
+  rate, expected loss, contribution and the confusion matrix with the active policy (validation split by default),
+  and save it as a new version (admin).
+- **Promote or roll back a model** with no downtime; see ROC/PR, calibration and a validation-only threshold
+  explorer for each version.
+- **Portfolio and scenarios**: exposure and EL by band, observed vs predicted by decile, HHI concentration,
+  loss-concentration curve, lending economics, break-even PD and rate, PD × rate heatmap, stress tests, loan NPV.
+- **Fairness**: group metrics, disparities and a proxy scan for attributes that are never model inputs.
+- **Monitoring**: drift per input and for PDs, alert history, Grafana.
+- **Audit**: every decision with its model and policy versions, rules fired and reasons — and an HMAC of the
+  inputs, never the inputs.
+
+## Guarantees carried over from v1
+
+- Train / validation / test separation; calibration, threshold and model selection on validation only.
+- Leakage guard on training rows only; explicit target mapping (1 is never assumed to mean default).
+- Sensitive attributes are never model inputs and never usable by policy rules; they feed only the fairness audit.
+- Every number has a provenance label: observed, measured, model, assumption, simulated, synthetic (enforced by a
+  contract test over real API responses).
+- Wording: *within threshold* or *flagged for review*.
+
+## Results
+
+### Synthetic data (bundled)
+
+`services/trainer/configs/synthetic.yaml`, seed 42, stratified 60/20/20, Platt calibration, max-F1 threshold:
 
 | Model | Validation ROC-AUC | Test ROC-AUC | Test PR-AUC | Test Brier | Test KS |
 |---|---|---|---|---|---|
@@ -136,28 +123,82 @@ uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db                 
 | Random Forest | 0.792 | 0.815 | 0.296 | 0.0623 | 0.491 |
 | Gradient Boosting (LightGBM) | 0.785 | 0.807 | 0.290 | 0.0625 | 0.493 |
 
-These are the same figures v1 published for the same data, which confirms the migration changed nothing.
-**SYNTHETIC data: these numbers are not evidence about real borrowers.** The test default rate is 7.7%, which is
-PR-AUC's random baseline.
+**Fabricated data; these numbers say nothing about real borrowers.** Test default rate 7.7% (PR-AUC's random
+baseline). The same seed reproduces v1's published figures exactly (`scripts/check_v1_equivalence.py`).
 
-### Real data: Home Credit (optional)
+### Real data: Home Credit
 
-Not run yet: nobody in the group has downloaded the data. The dataset is free with a Kaggle account.
+**Not reported yet.** The data is free (Kaggle account) but has not been downloaded for this project. Steps:
+download `application_train.csv` from <https://www.kaggle.com/competitions/home-credit-default-risk/data> into
+`data/raw/`, then `uv run creditiq-train train --config services/trainer/configs/home_credit.yaml`. Results will be
+listed here separately from the synthetic ones. Note that Home Credit's `TARGET` is an early payment difficulty,
+not a 12-month default.
 
-1. Go to <https://www.kaggle.com/competitions/home-credit-default-risk/data>, accept the competition rules and
-   download `application_train.csv` (~160 MB). For the enriched variant, also download `bureau.csv` and
-   `previous_application.csv`.
-2. Put the files in `data/raw/` (git-ignored; real data is never committed).
-3. Run `uv run creditiq-train train --config services/trainer/configs/home_credit.yaml`. For the enriched variant,
-   first run `uv run creditiq-train build-features home-credit --app data/raw/application_train.csv --bureau
-   data/raw/bureau.csv --previous data/raw/previous_application.csv`, then train with `home_credit_enriched.yaml`.
+### Performance
 
-Home Credit's `TARGET = 1` is a payment difficulty on an early instalment, not a 12-month default. The dataset has
-no calendar dates, so only the stratified split applies.
+k6 on a laptop (i3-1215U, 7.7 GB RAM, busy with other apps), one API worker, SQLite audit log — details and
+caveats in [`loadtest/RESULTS.md`](loadtest/RESULTS.md):
 
----
+| Endpoint | Load | RPS | p50 | p95 | p99 |
+|---|---|---|---|---|---|
+| `/v1/score` | 20 req/s for 60 s | 20.1 | 27.0 ms | **46.2 ms** | 176.0 ms |
+| `/v1/decide` | 20 req/s for 60 s | 20.1 | 25.2 ms | 54.9 ms | 265.6 ms |
+| `/v1/score` | 8 VUs back-to-back | 27.7 | 279.2 ms | 391.7 ms | 532.5 ms |
 
-## Data
+Target p95 < 50 ms for single-applicant scoring: **met**. Capacity of one worker is about 28 req/s; beyond that,
+requests queue.
 
-The bundled data is **synthetic**: 20,000 fabricated applications with Home Credit–style columns, plus a shifted
-5,000-row batch for drift demos. Real Home Credit data is optional; see [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
+## Testing and CI
+
+| Suite | Count | Where |
+|---|---|---|
+| Core library (incl. 98 tests ported from v1) | 125 | `packages/creditiq_core/tests` |
+| Trainer (configs, reproducibility, package contents, MLflow flow) | 16 | `services/trainer/tests` |
+| API (behaviour, privacy, hot reload, migrations, Postgres, contract) | 31 | `services/api/tests` |
+| of which: Schemathesis contract checks over the OpenAPI document | 36 operations | `services/api/tests/test_contract.py` |
+| Monitor | 5 | `services/monitor/tests` |
+| Web end-to-end (Playwright: score, simulate, promote, drift, what-if, 375 px) | 19 | `web/e2e` |
+| Legacy v1 app | 124 | `legacy/tests` |
+
+GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)): ruff, strict mypy, all Python tests on 3.11 and 3.12 with a
+Postgres service, OpenAPI snapshot check, legacy tests, web typecheck/lint/build with a generated-types drift check,
+Playwright against a live API and web, and Docker images to GHCR. A scheduled workflow runs a daily drift check on
+the deployed demo and a weekly candidate retrain.
+
+## Tech stack
+
+Python 3.11+ · uv · scikit-learn · LightGBM · SHAP · pandas · Pydantic v2 · MLflow · FastAPI · SQLAlchemy 2 ·
+Alembic · Postgres · Prometheus · Grafana · k6 · Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Radix ·
+TanStack Query/Table · Recharts · Zod · openapi-typescript · Playwright · Docker · GitHub Actions · Render · Neon ·
+Vercel.
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [docs/v2/MIGRATION_PLAN.md](docs/v2/MIGRATION_PLAN.md) | how v1 became v2, module by module |
+| [docs/adr/](docs/adr/README.md) | 15 architecture decision records |
+| [docs/RUNBOOK.md](docs/RUNBOOK.md) | retrain, promote, roll back, respond to drift, rotate keys |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | step-by-step public deployment |
+| [docs/v2/DESIGN.md](docs/v2/DESIGN.md) | design system: tokens, type, components, chart rules, screenshots |
+| [docs/MODEL_CARD.md](docs/MODEL_CARD.md) | model card (each registered version also gets its own) |
+| [docs/METHODOLOGY.md](docs/METHODOLOGY.md) | statistics and finance formulas |
+| [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) | synthetic, Home Credit, German Credit, LendingClub |
+| [docs/api/openapi.json](docs/api/openapi.json) | the API contract |
+| [loadtest/RESULTS.md](loadtest/RESULTS.md) | load-test method and results |
+
+## Limitations
+
+- All published model results are on **synthetic** data; real-data results await the Home Credit download.
+- The PD is the probability of the dataset's own event; treating it as a 12-month PD is an assumption. LGD, EAD,
+  rates and costs are assumptions. This is not an IFRS 9 or regulatory capital model.
+- Explanations show association, not causation; fairness checks cover only the attributes available and are not
+  legal advice.
+- Random splits do not test performance on future cohorts.
+- The hosted demo runs on free tiers: it sleeps when idle, and MLflow, Prometheus and Grafana run only locally.
+- Rate limits are per process (no Redis); scale-out would need a shared limiter.
+
+## Legacy v1
+
+The original Streamlit app lives in [`legacy/`](legacy/README.md), unchanged and still runnable
+(`cd legacy && pip install -r requirements.txt && streamlit run app.py`); its 124 tests run in CI.
